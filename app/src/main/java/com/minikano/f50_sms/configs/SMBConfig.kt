@@ -34,7 +34,7 @@ object SMBConfig {
     public = yes
     guest ok = yes
 
-[外置存储]
+[external_storage]
     comment = Android Server
     path = /mnt/media_rw
     browseable = yes
@@ -42,7 +42,7 @@ object SMBConfig {
     public = yes
     guest ok = yes
 
-[SD卡]
+[sd_card]
     comment = Android Server
     path = /storage/sdcard0
     browseable = yes

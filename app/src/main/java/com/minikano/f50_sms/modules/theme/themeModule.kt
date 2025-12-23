@@ -52,7 +52,7 @@ fun Route.themeModule(context: Context) {
     staticFiles("/api/uploads", File(context.filesDir, "uploads"))
 
     authenticatedRoute(context) {
-        //上传图片
+        // Upload image
         post("/api/upload_img") {
             try {
                 val multipart = call.receiveMultipart()
@@ -62,7 +62,7 @@ fun Route.themeModule(context: Context) {
                     when (part) {
                         is PartData.FileItem -> {
                             val originalFileName = part.originalFileName as String
-                            val ext = originalFileName.substringAfterLast('.', "jpg")  // 没有后缀默认 jpg
+                            val ext = originalFileName.substringAfterLast('.', "jpg")  // If no extension, default to jpg
                             fileName = "${UUID.randomUUID()}.$ext"
                             val fileBytes = part.streamProvider().readBytes()
                             val uploadDir = File(context.filesDir, "uploads")
@@ -85,21 +85,21 @@ fun Route.themeModule(context: Context) {
                         HttpStatusCode.OK
                     )
                 } else {
-                    throw Exception("图片上传失败")
+                    throw Exception("Image upload failed")
                 }
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "上传图片出错： ${e.message}")
+                KanoLog.d(TAG, "Image upload error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"上传图片出错: ${e.message}"}""",
+                    """{"error":"Image upload error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //删除图片
+        // Delete image
         post("/api/delete_img") {
             try {
                 val body = call.receiveText()
@@ -120,17 +120,17 @@ fun Route.themeModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "删除出错： ${e.message}")
+                KanoLog.d(TAG, "Delete error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"删除出错: ${e.message}"}""",
+                    """{"error":"Delete error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //保存主题
+        // Save theme
         post("/api/set_theme") {
             try {
                 val body = call.receiveText()
@@ -166,10 +166,10 @@ fun Route.themeModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "配置出错： ${e.message}")
+                KanoLog.d(TAG, "Config error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"配置出错: ${e.message}"}""",
+                    """{"error":"Config error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
@@ -177,7 +177,7 @@ fun Route.themeModule(context: Context) {
         }
     }
 
-    //读取主题
+    // Load theme
     get("/api/get_theme") {
         try {
             val sharedPref = context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
@@ -216,10 +216,10 @@ fun Route.themeModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "读取主题出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to load theme: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"读取主题出错"}""",
+                """{"error":"Failed to load theme"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

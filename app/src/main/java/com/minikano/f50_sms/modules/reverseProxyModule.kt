@@ -16,13 +16,13 @@ import java.net.URL
 
 const val TAG = "[$BASE_TAG]_reverseProxyModule"
 
-//反向代理官方后端
+// Reverse proxy to official backend
 fun Route.reverseProxyModule(targetServerIP:String) {
-    //转发到原厂web后端
+    // Forward to vendor web backend
     route("/api/goform/{...}") {
-        KanoLog.d(TAG,"开始反向代理资源...")
+        KanoLog.d(TAG,"Starting reverse proxy...")
         handle {
-            val targetServer = "http://${targetServerIP}" // 替换成你的目标服务器
+            val targetServer = "http://${targetServerIP}" // Replace with your target server
 
             val originalPath = call.request.uri.removePrefix("/api")
             val queryString = call.request.queryParameters.entries()
@@ -36,7 +36,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
 
             val method = call.request.httpMethod.value
 
-            // 处理 OPTIONS 请求
+            // Handle OPTIONS request
             if (method == "OPTIONS") {
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.response.headers.append("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -54,7 +54,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                     setRequestProperty("Referer", targetServer)
 
                     call.request.headers.forEach { key, values ->
-                        // 忽略客户端 Referer host
+                        // Ignore client Referer host
                         if (!key.equals("host", ignoreCase = true) && !key.equals("referer", ignoreCase = true)) {
                             setRequestProperty(key, values.joinToString(","))
                         }
@@ -87,7 +87,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
 
                 call.respondBytes(responseBytes, ContentType.parse(responseContentType), HttpStatusCode.fromValue(responseCode))
             } catch (e: Exception) {
-                KanoLog.e(TAG,"转发出错",e)
+                KanoLog.e(TAG,"Proxy forward error",e)
                 call.respond(HttpStatusCode.InternalServerError, "Proxy error: ${e.message}")
             }
         }

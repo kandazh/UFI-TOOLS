@@ -12,7 +12,7 @@ import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 
-//静态资源
+// Static assets
 fun Route.staticFileModule(context: Context) {
     val TAG = "[$BASE_TAG]_staticFileModule"
 
@@ -26,7 +26,7 @@ fun Route.staticFileModule(context: Context) {
             val contentType = ContentType.defaultForFilePath(path)
             call.respondBytes(bytes, contentType)
         } catch (e: Exception) {
-            KanoLog.e(TAG,"静态资源：$rawPath 不存在",e)
+            KanoLog.e(TAG,"Static asset not found: $rawPath",e)
             call.respond(HttpStatusCode.NotFound, "404 Not Found")
         }
     }

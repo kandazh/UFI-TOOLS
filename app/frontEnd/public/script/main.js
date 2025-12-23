@@ -2372,10 +2372,10 @@ function main_func() {
                 conn_client_html += station_list.map(({ hostname, ip_addr, mac_addr }) => (`
             <div class="card-item" style="display: flex;width: 100%;margin: 10px 0;overflow: auto;">
                 <div style="margin-right: 10px;">
-                    <p><span>${t('client_mgmt_hostname')}：</span><span onclick="copyText(event)">${hostname}</span></p>
-                    <p><span>${t('client_mgmt_mac')}：</span><span onclick="copyText(event)">${mac_addr}</span></p>
-                    <p><span>${t('client_mgmt_ip')}：</span><span onclick="copyText(event)">${ip_addr}</span></p>
-                    <p><span>${t('client_mgmt_conn_type')}：</span><span>${t('client_mgmt_conn_wireless')}</span></p>
+                    <p><span>${t('client_mgmt_hostname')}: </span><span onclick="copyText(event)">${hostname}</span></p>
+                    <p><span>${t('client_mgmt_mac')}: </span><span onclick="copyText(event)">${mac_addr}</span></p>
+                    <p><span>${t('client_mgmt_ip')}: </span><span onclick="copyText(event)">${ip_addr}</span></p>
+                    <p><span>${t('client_mgmt_conn_type')}: </span><span>${t('client_mgmt_conn_wireless')}</span></p>
                 </div>
                 <div style="flex:1;text-align: right;">
                     <button class="btn" style="padding: 20px 4px;" 
@@ -2390,10 +2390,10 @@ function main_func() {
                 conn_client_html += lan_station_list.map(({ hostname, ip_addr, mac_addr }) => (`
             <div class="card-item" style="display: flex;width: 100%;margin: 10px 0;overflow: auto;">
                 <div style="margin-right: 10px;">
-                    <p><span>${t('client_mgmt_hostname')}：</span><span onclick="copyText(event)">${hostname}</span></p>
-                    <p><span>${t('client_mgmt_mac')}：</span><span onclick="copyText(event)">${mac_addr}</span></p>
-                    <p><span>${t('client_mgmt_ip')}：</span><span onclick="copyText(event)">${ip_addr}</span></p>
-                    <p><span>${t('client_mgmt_conn_type')}：</span><span>${t('client_mgmt_conn_wired')}</span></p>
+                    <p><span>${t('client_mgmt_hostname')}: </span><span onclick="copyText(event)">${hostname}</span></p>
+                    <p><span>${t('client_mgmt_mac')}: </span><span onclick="copyText(event)">${mac_addr}</span></p>
+                    <p><span>${t('client_mgmt_ip')}: </span><span onclick="copyText(event)">${ip_addr}</span></p>
+                    <p><span>${t('client_mgmt_conn_type')}: </span><span>${t('client_mgmt_conn_wired')}</span></p>
                 </div>
                 <div style="flex:1;text-align: right;">
                     <button class="btn" style="padding: 20px 4px;" 
@@ -2413,8 +2413,8 @@ function main_func() {
                         return `
                     <div class="card-item" style="display: flex;width: 100%;margin: 10px 0;overflow: auto;">
                         <div style="margin-right: 10px;">
-                            <p><span>${t('client_mgmt_hostname')}：</span><span onclick="copyText(event)">${blackNameList[index] ? blackNameList[index] : t('client_mgmt_unknown')}</span></p>
-                            <p><span>${t('client_mgmt_mac')}：</span><span onclick="copyText(event)">${item}</span></p>
+                            <p><span>${t('client_mgmt_hostname')}: </span><span onclick="copyText(event)">${blackNameList[index] ? blackNameList[index] : t('client_mgmt_unknown')}</span></p>
+                            <p><span>${t('client_mgmt_mac')}: </span><span onclick="copyText(event)">${item}</span></p>
                         </div>
                         <div style="flex:1;text-align: right;">
                             <button class="btn" style="padding: 20px 4px;" onclick="setOrRemoveDeviceFromBlackList(${params})">
@@ -5531,7 +5531,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
             const text = await res.text()
             createToast(t('install_ing'), 'pink', 3000, () => {
-                close() // Close “downloading” toast
+                close() // Close "downloading" toast
             })
             await handlePluginFileUpload({
                 target: {

@@ -48,12 +48,12 @@ const chartUpdater = (prop, value) => {
         case 'memInfo':
             if (value) {
                 const memInfo = document.querySelector('#memInfo')
-                memInfo.innerHTML = `<div>${t('ram_all')}：${formatBytes(value['mem_total_kb'] * 1024)}</div>
-                <div>${t('ram_available')}：${formatBytes(value['mem_available_kb'] * 1024)}</div>
-                <div>${t('ram_used')}：${formatBytes(value['mem_used_kb'] * 1024)}(${Math.round(value['mem_usage_percent'])}%)</div>
-                <div>${t('all_swap')}：${formatBytes(value['swap_total_kb'] * 1024)}</div>
-                <div>${t('swap_used')}：${formatBytes(value['swap_used_kb'] * 1024)}(${Math.round(value['swap_usage_percent'])}%)</div>
-                <div>${t('swap_available')}：${formatBytes(value['swap_free_kb'] * 1024)}</div>`
+                memInfo.innerHTML = `<div>${t('ram_all')}: ${formatBytes(value['mem_total_kb'] * 1024)}</div>
+                <div>${t('ram_available')}: ${formatBytes(value['mem_available_kb'] * 1024)}</div>
+                <div>${t('ram_used')}: ${formatBytes(value['mem_used_kb'] * 1024)}(${Math.round(value['mem_usage_percent'])}%)</div>
+                <div>${t('all_swap')}: ${formatBytes(value['swap_total_kb'] * 1024)}</div>
+                <div>${t('swap_used')}: ${formatBytes(value['swap_used_kb'] * 1024)}(${Math.round(value['swap_usage_percent'])}%)</div>
+                <div>${t('swap_available')}: ${formatBytes(value['swap_free_kb'] * 1024)}</div>`
             }
             break
         case 'cpu_temp_list':

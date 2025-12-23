@@ -52,11 +52,11 @@ class ADBService : Service() {
         handlerThread = HandlerThread("KanoBackgroundHandler")
         handlerThread.start()
         handler = Handler(handlerThread.looper)
-        // 串行执行任务
+        // Run tasks sequentially
         handler.post {
             resetFilesFromAssets(applicationContext)
 
-            // 等文件拷贝完成后再继续
+            // Continue after file copy completes
             startAdbKeepAliveTask(applicationContext)
             startIperfTask(applicationContext)
             val executor = Executors.newFixedThreadPool(2)
@@ -64,10 +64,10 @@ class ADBService : Service() {
             executor.execute(runnableSMB)
         }
 
-        //开启定时任务
+        // Start scheduled tasks
         TaskSchedulerManager.init(applicationContext)
 
-        //上报信息
+        // Report status
         try{
             CoroutineScope(Dispatchers.Main).launch {
                 reportToServer()
@@ -80,19 +80,19 @@ class ADBService : Service() {
     private fun resetFilesFromAssets(context: Context) {
         val filesDir = context.filesDir
 
-        // 删除所有文件
+        // Delete all files
         filesDir.listFiles()?.forEach { file ->
             if (file.isFile) {
                 file.delete()
             }
         }
 
-        // 复制 assets 中的所有文件
+        // Copy all files from assets
         try {
             KanoUtils.copyAssetsRecursively(context, "shell", context.filesDir)
-            Log.d("kano_ZTE_LOG", "已初始化 files 目录")
+            Log.d("kano_ZTE_LOG", "Initialized files directory")
         } catch (e: Exception) {
-            Log.e("kano_ZTE_LOG", "初始化 files 目录失败:${e.message}")
+            Log.e("kano_ZTE_LOG", "Failed to initialize files directory: ${e.message}")
         }
     }
 
@@ -103,7 +103,7 @@ class ADBService : Service() {
                 try {
                     SmsPoll.checkNewSmsAndSend(applicationContext)
                 } catch (e: Exception) {
-                    KanoLog.e("kano_ZTE_LOG", "读取短信时发生错误", e)
+                    KanoLog.e("kano_ZTE_LOG", "Error while reading SMS", e)
                 }
             }
             handler.postDelayed(this, 5000)
@@ -113,10 +113,10 @@ class ADBService : Service() {
     private val runnableSMB = object : Runnable {
         override fun run() {
             try {
-                KanoLog.d("kano_ZTE_LOG", "激活SMB内置脚本中...")
+                KanoLog.d("kano_ZTE_LOG", "Activating built-in SMB script...")
                 SmbThrottledRunner.runOnceInThread(applicationContext)
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "激活SMB内置脚本错误")
+                KanoLog.e("kano_ZTE_LOG", "Failed to activate built-in SMB script")
             }
             handler.postDelayed(this, 20_000)
         }
@@ -125,7 +125,7 @@ class ADBService : Service() {
     private fun startIperfTask(context: Context){
         iperfExecutor.execute {
             try{
-                KanoLog.d("kano_ZTE_LOG", "iperf3启动中...")
+                KanoLog.d("kano_ZTE_LOG", "Starting iperf3...")
                 killProcessByName("iperf3")
                 val result =
                     executeShellFromAssetsSubfolderWithArgs(
@@ -135,12 +135,12 @@ class ADBService : Service() {
                         "-D",
                     )
                 if (result != null) {
-                    KanoLog.d("kano_ZTE_LOG", "iperf3已启动")
+                    KanoLog.d("kano_ZTE_LOG", "iperf3 started")
                 } else {
-                    KanoLog.e("kano_ZTE_LOG", "iperf3启动失败(用户模式)")
+                    KanoLog.e("kano_ZTE_LOG", "iperf3 failed to start (user mode)")
                 }
             }catch (e:Exception){
-                KanoLog.e("kano_ZTE_LOG", "iperf3命令执行出错",e)
+                KanoLog.e("kano_ZTE_LOG", "iperf3 command failed",e)
             }
         }
     }
@@ -151,7 +151,7 @@ class ADBService : Service() {
                 val adbPath = "shell/adb"
 
                 while (!Thread.currentThread().isInterrupted) {
-                    KanoLog.d("kano_ZTE_LOG", "保活ADB服务中...")
+                    KanoLog.d("kano_ZTE_LOG", "Keeping ADB service alive...")
 
                     var result =
                         executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices") {
@@ -159,22 +159,22 @@ class ADBService : Service() {
                         }
 
                     if (result?.contains("localhost:5555\tdevice") == true) {
-                        KanoLog.d("kano_ZTE_LOG", "adb存活，无需启动")
+                        KanoLog.d("kano_ZTE_LOG", "ADB is alive; no need to start")
                         adbIsReady = true
                         if(!isExecutedDisabledFOTA) {
                             disableFOTATimes --
                             if(disableFOTATimes <= 0){
-                                KanoLog.d("kano_ZTE_LOG", "已连续3次尝试使用adb禁用FOTA，强制isExecutingDisabledFOTA = true")
+                                KanoLog.d("kano_ZTE_LOG", "Tried 3 times to disable FOTA via adb; forcing isExecutingDisabledFOTA = true")
                                 isExecutingDisabledFOTA = true
                             }
                             val res = KanoUtils.disableFota(applicationContext)
                             if(res){
-                                KanoLog.d("kano_ZTE_LOG", "使用adb禁用FOTA完成")
+                                KanoLog.d("kano_ZTE_LOG", "Disabled FOTA via adb")
                             }
                             isExecutedDisabledFOTA = true
                         }
                     } else {
-                        KanoLog.w("kano_ZTE_LOG", "adb无设备或已退出，尝试启动")
+                        KanoLog.w("kano_ZTE_LOG", "ADB has no device or exited; trying to start")
                         adbIsReady = false
 
                         ShellKano.killProcessByName("adb")
@@ -214,11 +214,11 @@ class ADBService : Service() {
                             waited += interval
                         }
                     }
-                    // 每 11 秒轮询一次
+                    // Poll every 11 seconds
                     Thread.sleep(11_000)
                 }
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "ADB 保活线程异常", e)
+                KanoLog.e("kano_ZTE_LOG", "ADB keep-alive thread error", e)
             }
         }
     }
@@ -237,15 +237,15 @@ class ADBService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "adb_service后台服务",
+                "adb_service background service",
                 NotificationManager.IMPORTANCE_LOW
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
 
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("adb_service后台运行中")
-            .setContentText("正在执行adb_service定时任务")
+            .setContentTitle("adb_service running in background")
+            .setContentText("Running adb_service scheduled tasks")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .build()
     }

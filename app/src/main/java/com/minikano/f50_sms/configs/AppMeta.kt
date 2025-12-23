@@ -83,7 +83,7 @@ object AppMeta {
 
             isEnableLog = prefs.getBooleanCompat(PREF_ISDEBUG, false)
 
-            //获取口令，检查是否为弱口令
+            // Get token and check whether it is weak
             val token = prefs.getString(PREF_LOGIN_TOKEN,"admin") ?: "admin"
             updateIsDefaultOrWeakToken(KanoUtils.isWeakToken(token))
         } catch (e: Exception) {

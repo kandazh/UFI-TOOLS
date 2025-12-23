@@ -1091,7 +1091,7 @@
                             <input id="fileUploader" type="file" style="display: none;"
                                 onchange="handleFileUpload(event)">
                             <button style="width: 100%;" onclick="document.querySelector('#fileUploader').click()"
-                                data-i18n="bg_setting_upload">Upload Image (≤10MB)</button>
+                                data-i18n="bg_setting_upload">Upload Image (<=10MB)</button>
                         </label>
                     </div>
 
@@ -1113,7 +1113,7 @@
                         <input id="textColorEl" oninput="updateTextColor(event)"
                             style="width: 100%;margin-left: 0;margin-right: 0;" min="0" max="100" type="range">
                         <p data-i18n="bg_setting_theme_color">Theme color (hue, saturation, lightness)</p>
-                        <p>H：<span id="HValue">255</span>&nbsp;&nbsp;S：<span id="SValue">255</span>&nbsp;&nbsp;L：<span
+                        <p>H: <span id="HValue">255</span>&nbsp;&nbsp;S: <span id="SValue">255</span>&nbsp;&nbsp;L: <span
                                 id="LValue">255</span></p>
                         <div class="color-panel"></div>
                         <input id="colorEl" oninput="getColorByPercent(event)"

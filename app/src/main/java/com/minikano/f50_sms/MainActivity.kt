@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
         UniqueDeviceIDManager.init(this)
         val context = this
 
-        //第一次启动初始化login_token
+        // Initialize login_token on first launch
         val spf = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val existing = spf.all
         spf.edit(commit = true) {
@@ -115,21 +115,25 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // 这里用协程异步调用
+        // Use coroutine for async work
         lifecycleScope.launch {
             UniqueDeviceIDManager.init(applicationContext)
 
             val isNotUFI = withContext(Dispatchers.IO) { DeviceModelChecker.checkIsNotUFI(applicationContext) }
 
             if (isNotUFI) {
-                Toast.makeText(applicationContext, "App仅可在随身wifi上安装使用，手机使用请下载手机直装版，正在退出...", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    applicationContext,
+                    "This build can only be installed on a portable WiFi device. For phones, please download the phone version. Exiting...",
+                    Toast.LENGTH_LONG
+                ).show()
                 setContent {
                     Card(
-                        shape = RoundedCornerShape(16.dp), // 圆角
-                        elevation = CardDefaults.cardElevation(8.dp), // 阴影
+                        shape = RoundedCornerShape(16.dp), // Rounded corners
+                        elevation = CardDefaults.cardElevation(8.dp), // Shadow
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp) // 外边距
+                            .padding(16.dp) // Outer padding
                     ) {
                         Column(
                             modifier = Modifier
@@ -139,7 +143,7 @@ class MainActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             repeat(10) {
-                                Text("只能在随身WiFi上安装使用!!!", fontSize = 16.sp)
+                                Text("Install on a portable WiFi device only!", fontSize = 16.sp)
                             }
                         }
                     }
@@ -151,14 +155,14 @@ class MainActivity : ComponentActivity() {
             val isUnSupportDevice = withContext(Dispatchers.IO) { DeviceModelChecker.checkBlackList(applicationContext) }
 
             if (isUnSupportDevice) {
-                Toast.makeText(applicationContext, "该设备不受支持,正在退出...", Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, "This device is not supported. Exiting...", Toast.LENGTH_LONG).show()
                 setContent {
                     Card(
-                        shape = RoundedCornerShape(16.dp), // 圆角
-                        elevation = CardDefaults.cardElevation(8.dp), // 阴影
+                        shape = RoundedCornerShape(16.dp), // Rounded corners
+                        elevation = CardDefaults.cardElevation(8.dp), // Shadow
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp) // 外边距
+                            .padding(16.dp) // Outer padding
                     ) {
                         Column(
                             modifier = Modifier
@@ -169,23 +173,23 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Text("Device id:${UniqueDeviceIDManager.getUUID()}", fontSize = 14.sp)
                             repeat(4) {
-                                Text("不受支持的设备！！", fontSize = 20.sp)
-                                Text("Unsupported device！！", fontSize = 20.sp)
+                                Text("Unsupported device!!", fontSize = 20.sp)
+                                Text("Unsupported device!!", fontSize = 20.sp)
                             }
-                            Text("3秒后自动退出！！", fontSize = 20.sp)
-                            Text("Auto exit in 3 seconds！！", fontSize = 20.sp)
+                            Text("Auto exit in 3 seconds!!", fontSize = 20.sp)
+                            Text("Auto exit in 3 seconds!!", fontSize = 20.sp)
                         }
                     }
                 }
                 delay(4600)
                 exitProcess(-114514)
             } else {
-                // 保持屏幕常亮
+                // Keep screen on
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
                 requestNotificationPermissionIfNeeded()
 
-                // 忽略电池优化权限
+                // Request ignore battery optimizations permission
                 val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
                 if (!powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
@@ -193,7 +197,7 @@ class MainActivity : ComponentActivity() {
                     context.startActivity(intent)
                 }
 
-                //用户使用量权限
+                // Usage access permission
                 if (!hasUsageAccessPermission(context)) {
                     val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -202,10 +206,10 @@ class MainActivity : ComponentActivity() {
 
                 val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-                //每次启动时需要检测IP变动，适应用户ip网段更改
+                // Detect IP changes on each start to adapt to subnet updates
                 KanoUtils.adaptIPChange(context)
 
-                //防止服务重复启动
+                // Prevent duplicate service startup
                 if (!isServiceRunning(WebService::class.java)) {
                     startForegroundService(Intent(context, WebService::class.java))
                 }
@@ -213,7 +217,7 @@ class MainActivity : ComponentActivity() {
                     startForegroundService(Intent(context, ADBService::class.java))
                 }
 
-                // 注册广播
+                // Register broadcast
                 registerReceiver(
                     serverStatusReceiver, IntentFilter(SERVER_INTENT),
                     Context.RECEIVER_EXPORTED
@@ -343,7 +347,7 @@ class MainActivity : ComponentActivity() {
                                 isAutoIpEnabled = it.toString()
                                 if (it.toString() == true.toString()) {
                                     KanoUtils.adaptIPChange(context, true) { newIp ->
-                                        gatewayIp = newIp // 更新 Compose 状态变量，UI 立即更新
+                                        gatewayIp = newIp // Update Compose state variable so the UI refreshes immediately
                                     }
                                 }
                             },
@@ -359,7 +363,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             onConfirm = {
-                                // 保存并重启服务器
+                                // Save settings and restart server
                                 sharedPrefs.edit(commit = true) {
                                     putString(PREF_GATEWAY_IP, gatewayIp)
                                     putString(PREF_LOGIN_TOKEN, loginToken.ifBlank { "admin" })
@@ -368,7 +372,7 @@ class MainActivity : ComponentActivity() {
                                     putString(PREF_WAKELOCK, wakeLock)
                                     updateIsDefaultOrWeakToken(KanoUtils.isWeakToken(loginToken.ifBlank { "admin" }))
                                 }
-                                //更新唤醒锁
+                                // Update wake lock
                                 if(wakeLock != "lock"){
                                     WakeLock.releaseWakeLock()
                                 } else {
@@ -429,28 +433,28 @@ class MainActivity : ComponentActivity() {
         }
         if (requestCode == REQUEST_CODE_SMS) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                KanoLog.d("权限", "短信权限已授予")
+                KanoLog.d("Permission", "SMS permission granted")
             } else {
-                KanoLog.d("权限", "短信权限被拒绝")
+                KanoLog.d("Permission", "SMS permission denied")
             }
         }
     }
 
     private fun runADB() {
-        //网络adb
+        // Network ADB
         //adb setprop service.adb.tcp.port 5555
         Thread {
             try {
                 ShellKano.runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
                 ShellKano.runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
-                KanoLog.d("kano_ZTE_LOG", "网络adb调试执行成功")
+                KanoLog.d("kano_ZTE_LOG", "Network adb debugging executed successfully")
             } catch (e: Exception) {
                 try {
                     ShellKano.runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
                     ShellKano.runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
-                    KanoLog.d("kano_ZTE_LOG", "网络adb调试执行成功")
+                    KanoLog.d("kano_ZTE_LOG", "Network adb debugging executed successfully")
                 } catch (e: Exception) {
-                    KanoLog.d("kano_ZTE_LOG", "网络adb调试出错： ${e.message}")
+                    KanoLog.d("kano_ZTE_LOG", "Network adb debugging error: ${e.message}")
                 }
             }
         }.start()
@@ -515,9 +519,9 @@ fun InputUI(
                     .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 标题
+                // Title
                 Text(
-                    text = "服务已停止\nService has stopped",
+                    text = "Service has stopped",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -525,7 +529,7 @@ fun InputUI(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "路由器管理IP\nRouter management IP",
+                    text = "Router management IP",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -542,7 +546,7 @@ fun InputUI(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "登录口令(默认admin)\nLogin Token (default: admin)",
+                    text = "Login token (default: admin)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -558,14 +562,14 @@ fun InputUI(
                     placeholder = { Text("admin") }
                 )
                 Spacer(modifier = Modifier.height(6.dp))
-                // 开关组
+                // Switches
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("自动检测IP\nAuto IP",fontSize = 12.sp)
+                        Text("Auto IP",fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isAutoCheckIp,
@@ -573,7 +577,7 @@ fun InputUI(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("登录口令\nLogin Token",fontSize = 12.sp)
+                        Text("Login token",fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isTokenEnabled,
@@ -587,7 +591,7 @@ fun InputUI(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("调试日志\nDebug logs",fontSize = 12.sp)
+                        Text("Debug logs",fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isDebug,
@@ -595,7 +599,7 @@ fun InputUI(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("屏幕常亮\nWake Lock",fontSize = 12.sp)
+                        Text("Wake lock",fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isWkLock,
@@ -611,7 +615,7 @@ fun InputUI(
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("启动/Start", textAlign = TextAlign.Center)
+                    Text("Start", textAlign = TextAlign.Center)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
@@ -641,11 +645,11 @@ fun ServerUI(
 ) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Card(
-            shape = RoundedCornerShape(16.dp), // 圆角
-            elevation = CardDefaults.cardElevation(8.dp), // 阴影
+            shape = RoundedCornerShape(16.dp), // Rounded corners
+            elevation = CardDefaults.cardElevation(8.dp), // Shadow
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp) // 外边距
+                .padding(16.dp) // Outer padding
                 .wrapContentHeight()
         ) {
             Column(
@@ -655,7 +659,7 @@ fun ServerUI(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "服务运行中\nServer is running",
+                    text = "Server is running",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -663,27 +667,27 @@ fun ServerUI(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 HyperlinkText(
-                    "前端地址/Link: $serverAddress",
+                    "Frontend link: $serverAddress",
                     serverAddress,
                     fontSize = 16.sp,
                     url = serverAddress
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 HyperlinkText(
-                    "网关地址/Gateway: $gatewayIP",
+                    "Gateway: $gatewayIP",
                     gatewayIP,
                     fontSize = 16.sp,
                     url = "http://$gatewayIP"
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Text("点击停止服务更改网关和口令密码(默认admin)\nClick to stop the service and change the gateway and password (default: admin)",
+                Text("Click to stop the service and change the gateway and password (default: admin)",
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(onClick = onStopServer) {
-                    Text("停止服务/Stop Server")
+                    Text("Stop Server")
                 }
                 Spacer(modifier = Modifier.height(32.dp))
                 Text("Created by Minikano with ❤️ ver: ${versionName}", fontSize = 12.sp)
@@ -708,7 +712,7 @@ fun HyperlinkText(
 ) {
     val context = LocalContext.current
     val annotatedText = buildAnnotatedString {
-        // 整段默认字体大小
+        // Default font size for entire text
         withStyle(style = SpanStyle(fontSize = fontSize)) {
             append(fullText)
         }
@@ -717,7 +721,7 @@ fun HyperlinkText(
         val endIndex = startIndex + linkText.length
 
         if (startIndex >= 0) {
-            // 链接部分样式（覆盖字体大小、颜色、下划线）
+            // Link style (override size/color/underline)
             addStyle(
                 style = SpanStyle(
                     color = Color(0xFF1E88E5),
@@ -739,14 +743,14 @@ fun HyperlinkText(
 
     ClickableText(
         text = annotatedText,
-        style = TextStyle(fontSize = fontSize), // 控制整体字体大小
+        style = TextStyle(fontSize = fontSize), // Controls overall font size
         onClick = { offset ->
             annotatedText.getStringAnnotations("URL", offset, offset)
                 .firstOrNull()?.let {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it.item)))
                     } catch (e: Exception) {
-                        Toast.makeText(context, "打开链接失败", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Failed to open link", Toast.LENGTH_SHORT).show()
                     }
                 }
         }
