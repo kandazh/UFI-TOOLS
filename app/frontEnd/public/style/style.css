@@ -894,7 +894,7 @@ li.dragging {
 .cpu-card .card-inner {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    /* 每列自动等分 */
+    /* Auto-split columns evenly */
     gap: 2px;
     width: 100%;
     box-sizing: border-box;

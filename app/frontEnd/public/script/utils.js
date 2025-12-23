@@ -5,7 +5,7 @@ const isArray = (raw) => {
     } catch (e) {
         parsed = null;
     }
-    // 判断是否为数组
+    // Check whether the parsed value is an array
     if (Array.isArray(parsed)) {
         return true
     } else {
@@ -18,37 +18,37 @@ function requestInterval(callback, interval) {
     let timeoutId = null;
 
     function loop(timestamp) {
-        if (!lastTime) lastTime = timestamp; // 初始化上次时间
-        const delta = timestamp - lastTime; // 计算时间差
+        if (!lastTime) lastTime = timestamp; // Initialize last timestamp
+        const delta = timestamp - lastTime; // Compute time delta
 
         if (delta >= interval) {
-            callback(); // 执行任务
-            lastTime = timestamp; // 更新上次时间
+            callback(); // Run task
+            lastTime = timestamp; // Update last timestamp
         }
 
-        timeoutId = requestAnimationFrame(loop); // 继续请求下一帧
+        timeoutId = requestAnimationFrame(loop); // Continue requesting next frame
     }
 
-    timeoutId = requestAnimationFrame(loop); // 启动动画循环
+    timeoutId = requestAnimationFrame(loop); // Start animation loop
 
-    // 返回清除函数
+    // Return cleanup function
     return () => cancelAnimationFrame(timeoutId);
 }
 
 function copyText(e) {
     const text = e.target.innerText;
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        // 浏览器支持
+        // Supported by the browser
         navigator.clipboard.writeText(text).then(() => {
             createToast(t('copy_success'), 'green')
         }).catch(err => {
             createToast(t('copy_failed'), 'red')
         });
     } else {
-        // 创建text area
+        // Create a textarea fallback
         let textArea = document.createElement("textarea");
         textArea.value = text;
-        // 使text area不在viewport，同时设置不可见
+        // Keep textarea out of viewport and invisible
         textArea.style.position = "absolute";
         textArea.style.opacity = 0;
         textArea.style.left = "-999999px";
@@ -57,7 +57,7 @@ function copyText(e) {
         textArea.focus();
         textArea.select();
         return new Promise((res, rej) => {
-            // 执行复制命令并移除文本框
+            // Execute copy command and remove textarea
             document.execCommand('copy') ? res() : rej();
             textArea.remove();
         }).then(() => {
@@ -68,15 +68,15 @@ function copyText(e) {
     }
 }
 
-//按照信号dbm强度绘制信号强度栏(-113到-51)
+// Draw signal strength bar based on dBm value (e.g. -113 to -51)
 function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow_low = -100, config = { g: 'green', o: 'orange', r: 'red' }) {
     let strength = Number(val)
     strength = strength > max ? max : strength
     strength = strength < min ? min : strength
     const bar = document.createElement('span')
     const strengths = Array.from({ length: Math.abs((min - max)) + 1 }, (_, i) => min + i);
-    const index = strengths.findIndex(i => i >= strength) // 找到对应的索引
-    const percent = (index / strengths.length) * 100 // 计算百分比
+    const index = strengths.findIndex(i => i >= strength) // Find matching index
+    const percent = (index / strengths.length) * 100 // Calculate percentage
     const progress = document.createElement('span')
     const text = document.createElement('span')
 
@@ -103,7 +103,7 @@ function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow
 
 function kano_getSignalEmoji(strength) {
     const signals = ["📶 ⬜⬜⬜⬜", "📶 🟨⬜⬜⬜", "📶 🟩🟨⬜⬜", "📶 🟩🟩🟨⬜", "📶 🟩🟩🟩🟨", "📶 🟩🟩🟩🟩"];
-    return `${strength} ${signals[Math.max(0, Math.min(strength, 5))]}`; // 确保输入在 0-5 之间
+    return `${strength} ${signals[Math.max(0, Math.min(strength, 5))]}`; // Clamp input to 0-5
 }
 
 function kano_formatTime(seconds) {
@@ -135,32 +135,32 @@ function formatBytes(bytes, needTrim = false) {
 }
 
 function decodeBase64(base64String) {
-    // 将Base64字符串分成每64个字符一组
+    // Ensure Base64 padding
     const padding = base64String.length % 4 === 0 ? 0 : 4 - (base64String.length % 4)
     base64String += '='.repeat(padding)
 
-    // 使用atob()函数解码Base64字符串
+    // Decode Base64 string
     const binaryString = window.atob(base64String)
 
-    // 将二进制字符串转换为TypedArray
+    // Convert binary string to a TypedArray
     const bytes = new Uint8Array(binaryString.length)
     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i)
 
-    // 将TypedArray转换为字符串
+    // Convert TypedArray to UTF-8 string
     return new TextDecoder('utf-8').decode(bytes)
 }
 
 function encodeBase64(plainText) {
-    // 将字符串转为 Uint8Array（二进制形式）
+    // Convert string to Uint8Array (binary)
     const bytes = new TextEncoder().encode(plainText)
 
-    // 把二进制转换为字符串（每个字节对应一个字符）
+    // Convert binary to string (each byte -> one character)
     let binaryString = ''
     for (let i = 0; i < bytes.length; i++) {
         binaryString += String.fromCharCode(bytes[i])
     }
 
-    // 使用 btoa() 编码为 Base64
+    // Encode to Base64
     return window.btoa(binaryString)
 }
 
@@ -206,7 +206,7 @@ function createToast(text, color, delay = 3000, fn = null) {
             }, 300);
         }, delay);
     } catch (e) {
-        console.error('创建toast失败:', e);
+        console.error('Failed to create toast:', e);
     }
 }
 
@@ -263,7 +263,7 @@ function createFixedToast(_id, text, style = {}) {
             }
         }
     } catch (e) {
-        console.error('创建toast失败:', e);
+        console.error('Failed to create toast:', e);
     }
 }
 
@@ -333,7 +333,7 @@ function hsvToHsl(h, s, v) {
     };
 }
 
-// 创建一个开关
+// Create a switch
 function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) {
     const container = document.createElement('div');
     container.className = 'Switch';
@@ -380,7 +380,7 @@ function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) 
     label.appendChild(input);
     container.appendChild(label);
 
-    // 添加 update 方法到容器上，供外部使用
+    // Expose an update method on the container
     container.update = updateSwitchVisual;
 
     return container;
@@ -416,8 +416,8 @@ const createCollapseObserver = (boxEl = null) => {
             }
         })
         observer.observe(boxEl, {
-            attributes: true, // 监听属性变化
-            attributeFilter: ['data-name'], // 只监听 data-name 属性
+            attributes: true, // Watch attribute changes
+            attributeFilter: ['data-name'], // Only watch data-name
         });
         return {
             el: boxEl
@@ -433,7 +433,7 @@ const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
         if (storName) {
             collapseMenuEl.dataset.name = localStorage.getItem(storName) || 'open';
         } else {
-            collapseMenuEl.dataset.name = 'open'; // 默认打开
+            collapseMenuEl.dataset.name = 'open'; // Default: open
         }
         const collapseBtn = document.querySelector(btn_id);
         const switchComponent = createSwitch({
@@ -450,7 +450,7 @@ const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
             }
         });
 
-        // 用 container.update 来同步状态
+        // Sync state using container.update
         const observer = new MutationObserver(() => {
             const newVal = collapseMenuEl.dataset.name === 'open';
             switchComponent.update?.(newVal);
@@ -471,7 +471,7 @@ const inputIMEIAT = () => {
     document.querySelector('#AT_INPUT').value = `AT+SPIMEI=0,"${t('your_new_imei')}"`
 }
 
-//提取apk中日期与时间
+// Extract date/time from APK filename
 const getApkDate = (filename = null) => {
     if (!filename) return {
         date_str: null,
@@ -549,13 +549,13 @@ const intToIp = (int) => {
     ].join('.');
 }
 
-//获取字体颜色
+// Get current text color
 const getTextColor = () => getComputedStyle(document.documentElement)
     .getPropertyValue('--dark-text-color')
     .trim();
 
 
-// chart.js插件合集
+// chart.js plugin collection
 const centerTextPlugin = {
     id: 'centerText',
     afterDatasetsDraw: (chart) => {
@@ -603,13 +603,13 @@ const getRefteshRate = (cb) => {
     return rate_num
 }
 
-// 特定模态框模糊区域点击关闭
+// Close certain modals when clicking the blurred/mask area
 Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
     el.onclick = (e) => {
         e.stopPropagation()
         const classList = Array.from(e?.target?.classList || [])
         const id = e.target.id
-        //维护一个黑名单，黑名单内的模态框不受影响
+        // Maintain a blacklist: modals in this list are not affected
         const blackList = ['updateSoftwareModal', "plugin_store", "APNViewModal", "APNEditModal"]
         const isCloseable = !blackList.includes(id)
         if (classList && classList.includes('mask') && isCloseable) {
@@ -621,7 +621,7 @@ Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
 })
 
 
-//传入css变量返回颜色
+// Return the computed color for a CSS variable
 const getCssVariableColor = (variableName) => {
     const color = getComputedStyle(document.documentElement)
         ?.getPropertyValue(variableName)
@@ -636,7 +636,7 @@ const scroolToTop = () => {
     })
 }
 
-//下载url
+// Download URL
 const downloadUrl = (url, filename) => {
     const a = document.createElement('a')
     a.href = url
@@ -648,7 +648,7 @@ const downloadUrl = (url, filename) => {
     createToast(t('download_ing'), 'pink')
 }
 
-//获取浏览器版本号
+// Get browser version
 function getBrowserVersion() {
     const ua = navigator.userAgent;
 
@@ -712,10 +712,10 @@ const checkBandSelect = () => {
             }
         })
         if (flagCount == bandTableTrList.length) {
-            //全选开关为真
+            // Select-all switch is true
             selectAllBandChkBox.checked = true
         } else {
-            //全选开关为假
+            // Select-all switch is false
             selectAllBandChkBox.checked = false
         }
     }
@@ -847,12 +847,12 @@ const createModal = ({ name, noBlur, isMask, title, maxWidth, content, contentSt
     }
 }
 
-// 安全DOM
+// Safe DOM
 const parseDOM = (text) => {
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, 'text/html');
-        // 获取除了 script 的其他内容
+        // Keep everything except <script>
         let clone = doc.body.cloneNode(true);
         clone.querySelectorAll('script').forEach(el => el.remove());
         const remainingHTML = clone.innerHTML.trim();
@@ -869,15 +869,15 @@ const fillCurl = (kind) => {
     switch (kind) {
         case 'tg':
             message = message = t('tg_sms_help')
-            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<你的token>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<你的聊天会话id>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
+            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<your_token>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<your_chat_id>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
             break;
         case 'wechat':
             message = t('wechat_sms_help')
-            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<输入你的key>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "【号码】{{sms-from}}\\n【短信内容】{{sms-body}}\\n【时间】{{sms-time}}"}}'`
+            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<your_key>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "[From] {{sms-from}}\\n[Message] {{sms-body}}\\n[Time] {{sms-time}}"}}'`
             break;
         case 'pushplus':
             message = t('pushplus_sms_help')
-            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<你的token>&title=有新消息！！&content=**【短信内容】**%0A{{sms-body}}%0A%0A**【时间】**%0A{{sms-time}}%0A%0A**【号码】**%0A{{sms-from}}&template=markdown"`
+            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<your_token>&title=New message!&content=**[Message]**%0A{{sms-body}}%0A%0A**[Time]**%0A{{sms-time}}%0A%0A**[From]**%0A{{sms-from}}&template=markdown"`
             break;
     }
 
@@ -909,7 +909,7 @@ const checkBroswer = () => {
 
     if (ignoreBrowserCheckAlert != '1') {
         if (result.browser === "Chrome") {
-            //需要大于125
+            // Should be greater than 125
             const versionParts = result.version.split('.');
             const majorVersion = parseInt(versionParts[0], 10);
             if (majorVersion <= 125) {
@@ -922,7 +922,7 @@ const checkBroswer = () => {
                 alert(`${t('your')}${result.browser}${t('browser_version_very_low')}`);
             }
         } else if (result.browser === "Firefox") {
-            //需要大于125
+            // Should be greater than 125
             const versionParts = result.version.split('.');
             const majorVersion = parseInt(versionParts[0], 10);
             if (majorVersion <= 125) {
@@ -935,7 +935,7 @@ const checkBroswer = () => {
                 alert(`${t('your')}${result.browser}${t('browser_version_very_low')}`);
             }
         } else if (result.browser === "Safari") {
-            //需要大于17.5
+            // Should be greater than 17.5
             const versionParts = result.version.split('.');
             const majorVersion = parseInt(versionParts[0], 10);
             if (majorVersion <= 17.5) {
@@ -955,7 +955,7 @@ const showLoginHelp = () => {
     const message = t("login_help_text").replaceAll('\n', "<br>")
     const { el, close } = createFixedToast('kano_login_help_message', `
                     <div style="pointer-events:all;width:80vw;max-width:600px">
-                        <div class="title" style="margin:0">🔑 登录帮助说明</div>
+                        <div class="title" style="margin:0">🔑 Login Help</div>
                         <div style="margin:10px 0;max-height:400px;overflow:auto">${message}</div>
                         <div style="text-align:right">
                             <button style="font-size:.64rem" id="close_login_help_btn" data-i18n="pay_btn_dismiss">${t('pay_btn_dismiss')}</button>

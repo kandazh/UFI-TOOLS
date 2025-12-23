@@ -1,11 +1,8 @@
 const AVAILABLE_LANGS = {
-    zh: "中文",
-    en: "English",
-    ja:'日本語',
-    vi: "Tiếng Việt"
+    en: "English"
 };
 
-const DEFAULT_LANG = "zh";
+const DEFAULT_LANG = "en";
 const LANG_STORAGE_KEY = "kano_lang";
 let currentLang = DEFAULT_LANG;
 let translations = {};
@@ -70,7 +67,7 @@ function t(key, fallback = "") {
     return translations[key] || fallback || key;
 }
 
-// 初始化
+// Initialize
 (function initI18n() {
     createLanguageSelector();
     const savedLang = localStorage.getItem(LANG_STORAGE_KEY);

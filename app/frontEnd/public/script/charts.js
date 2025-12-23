@@ -1,4 +1,4 @@
-// 图表更新器
+// Chart updater
 const chartUpdater = (prop, value) => {
     switch (prop) {
         case 'cpu_usage':
@@ -21,7 +21,7 @@ const chartUpdater = (prop, value) => {
                     let cur = String(value[`cpu${i}`].cur)
                     let cur_origin = String(value[`cpu${i}`].cur)
                     let max = String(value[`cpu${i}`].max)
-                    // 通过使用率表判断核心启用状态
+                    // Determine whether a core is enabled via the usage table
                     let usgList = window.UFI_DATA.cpuUsageInfo
                     if (usgList) {
                         if (!usgList[`cpu${i}`]) {
@@ -76,7 +76,7 @@ const chartUpdater = (prop, value) => {
 const MAX_length = 20
 const ANI_DURATION = 300
 
-//cpu占用
+// CPU usage
 const updateCpuChart = (() => {
     const canvas = document.getElementById('kanoCpuChart');
     const ctx = canvas.getContext('2d');
@@ -103,8 +103,8 @@ const updateCpuChart = (() => {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: ANI_DURATION,    // 0.5秒动画
-                easing: 'easeOutQuad'  // 自然缓动效果
+                duration: ANI_DURATION,    // 0.5s animation
+                easing: 'easeOutQuad'  // natural easing
             },
             plugins: {
                 legend: { display: false },
@@ -144,11 +144,11 @@ const updateCpuChart = (() => {
     }
 })()
 
-//cpu核心占用
+// Per-core CPU usage
 const updateCpuCoreChart = (() => {
     const canvas = document.getElementById('kanoCpuCoreChart');
     const ctx = canvas.getContext('2d');
-    const labels = ['核心1', '核心2', '核心3', '核心4', '核心5', '核心6', '核心7', '核心8']
+    const labels = ['Core 1', 'Core 2', 'Core 3', 'Core 4', 'Core 5', 'Core 6', 'Core 7', 'Core 8']
     const data = Array(8).fill(0)
 
     Chart.register(centerTextPlugin);
@@ -171,8 +171,8 @@ const updateCpuCoreChart = (() => {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: ANI_DURATION,    // 0.5秒动画
-                easing: 'easeOutQuad'  // 自然缓动效果
+                duration: ANI_DURATION,    // 0.5s animation
+                easing: 'easeOutQuad'  // natural easing
             },
             plugins: {
                 legend: { display: false },
@@ -210,7 +210,7 @@ const updateCpuCoreChart = (() => {
     }
 })()
 
-//内存占用
+// Memory usage
 const updateMemChart = (() => {
     const canvas = document.getElementById('kanoMemChart');
     const ctx = canvas.getContext('2d');
@@ -235,8 +235,8 @@ const updateMemChart = (() => {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: ANI_DURATION,    // 0.5秒动画
-                easing: 'easeOutQuad'  // 自然缓动效果
+                duration: ANI_DURATION,    // 0.5s animation
+                easing: 'easeOutQuad'  // natural easing
             },
             plugins: {
                 legend: { display: false },
@@ -286,7 +286,7 @@ const updateMemChart = (() => {
     }
 })()
 
-// CPU温度图表
+// CPU temperature chart
 const updateTempChart = (() => {
     const canvas = document.getElementById('kanoTempChart');
     const ctx = canvas.getContext('2d');
@@ -361,7 +361,7 @@ const updateTempChart = (() => {
     }
 })()
 
-//网速图表
+// Network speed chart
 const updateNetworkChart = (() => {
     const canvas = document.getElementById('kanoNetChart');
     const ctx = canvas.getContext('2d');
@@ -398,8 +398,8 @@ const updateNetworkChart = (() => {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: ANI_DURATION,    // 0.5秒动画
-                easing: 'easeOutQuad'  // 自然缓动效果
+                duration: ANI_DURATION,    // 0.5s animation
+                easing: 'easeOutQuad'  // natural easing
             },
             plugins: {
                 legend: { display: false },

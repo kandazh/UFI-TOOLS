@@ -1,21 +1,21 @@
-//色相
+// Hue
 let currentHue = 0;
-//透明度
+// Opacity
 let currentOpacity = 1;
-// 亮度
+// Brightness
 let currentValue = 1;
-//饱和度
+// Saturation
 let currentSaturation = 1;
-//字体颜色
+// Text color
 let currentTextColor = 0;
 
-//主页模糊开关
+// Home blur toggle
 let homeBlurSwitch = true
 
-//背景overlay开关
+// Background overlay toggle
 let overlaySwitch = true;
 
-// 调色盘
+// Color palette
 function getColorByPercent(e) {
     const HValue = document.querySelector("#HValue")
     if (HValue) HValue.innerText = (+e.target.value / 100 * 255).toFixed(0)
@@ -23,11 +23,11 @@ function getColorByPercent(e) {
     const h = (value / 100) * 300;
     currentHue = h;
     updateColor();
-    //保存进度到localStorage
+    // Save slider value to localStorage
     localStorage.setItem('colorPer', value);
 }
 
-//亮度
+// Brightness
 function getValueByPercent(e) {
     const LValue = document.querySelector("#LValue")
     if (LValue) LValue.innerText = (+e.target.value / 100 * 255).toFixed(0)
@@ -37,29 +37,29 @@ function getValueByPercent(e) {
     localStorage.setItem('brightPer', value);
 }
 
-// 透明度
+// Opacity
 function getOpacityByPercent(e) {
     const opacityValue = document.querySelector("#opacityValue")
     if (opacityValue) opacityValue.innerText = (+e.target.value / 100 * 255).toFixed(0)
     const value = e.target.value; // 0 ~ 100
     currentOpacity = value / 100;
     updateColor();
-    //保存进度到localStorage
+    // Save slider value to localStorage
     localStorage.setItem('opacityPer', value);
 }
 
-//饱和度
+// Saturation
 function getSaturationByPercent(e) {
     const SValue = document.querySelector("#SValue")
     if (SValue) SValue.innerText = (+e.target.value / 100 * 255).toFixed(0)
     const value = e.target.value; // 0 ~ 100
     currentSaturation = value / 100;
     updateColor();
-    //保存进度到localStorage
+    // Save slider value to localStorage
     localStorage.setItem('saturationPer', value);
 }
 
-//字体颜色
+// Text color
 function updateTextColor(e) {
     const fontColorValue = document.querySelector("#fontColorValue")
     if (fontColorValue) fontColorValue.innerText = (+e.target.value / 100 * 255).toFixed(0)
@@ -68,43 +68,43 @@ function updateTextColor(e) {
     const color = `rgb(${gray}, ${gray}, ${gray})`;
     currentTextColor = color;
     updateColor();
-    //保存进度到localStorage
+    // Save slider value to localStorage
     localStorage.setItem('textColorPer', value);
     localStorage.setItem('textColor', color);
 }
 
-//主页毛玻璃
+// Home blur
 function updateBlurSwitch(e) {
     const value = e.target.checked;
     homeBlurSwitch = value
     updateColor()
-    //保存进度到localStorage
+    // Save state to localStorage
     localStorage.setItem('blurSwitch', value);
 }
 
-//背景遮罩
+// Background overlay
 function updateOverlaySwitch(e) {
     const value = e.target.checked;
     overlaySwitch = value
     updateColor()
-    //保存进度到localStorage
+    // Save state to localStorage
     localStorage.setItem('overlaySwitch', value);
 }
 
 
-// 更新颜色 + 透明度
+// Update color + opacity
 function updateColor() {
     const { r, g, b } = hsvToRgb(currentHue, currentSaturation, currentValue);
     const { h, s, l } = hsvToHsl(currentHue, currentSaturation, currentValue);
 
-    // 基础颜色
+    // Base colors
     const lighterL = Math.min(l + 20, 100);
     const btnBaseOpacity = Math.min(currentOpacity * 1.2, 1);
 
-    // 正常按钮
+    // Normal button
     const btnColor = `hsl(${Math.round(h)} ${s.toFixed(1)}% ${lighterL.toFixed(1)}% / ${(btnBaseOpacity * 100).toFixed(2)}%)`;
 
-    // 激活按钮（更亮、更饱和、更实）
+    // Active button (brighter, more saturated, more opaque)
     let activeS, activeL;
 
     if (lighterL > 80) {
@@ -119,13 +119,13 @@ function updateColor() {
     const btnActiveOpacity = Math.min(btnBaseOpacity + 0.2, 1);
     const btnActiveColor = `hsl(${Math.round(h)} ${activeS.toFixed(1)}% ${activeL.toFixed(1)}% / ${(btnActiveOpacity * 100).toFixed(2)}%)`;
 
-    // 禁用按钮（去饱和、更透明）
+    // Disabled button (desaturated, more transparent)
     const btnDisabledOpacity = Math.max(btnBaseOpacity - 0.2, 0.1);
     const btnDisabledColor = `hsl(${Math.round(h)} 0% ${lighterL.toFixed(1)}% / ${(btnDisabledOpacity * 100).toFixed(2)}%)`;
 
     const color = `rgba(${r}, ${g}, ${b}, ${currentOpacity})`;
 
-    // 修改 :root 中的 CSS 变量
+    // Update CSS variables in :root
     document.documentElement.style.setProperty('--dark-bgi-color', color);
     document.documentElement.style.setProperty('--dark-tag-color', color);
     document.documentElement.style.setProperty('--dark-btn-color', btnColor);
@@ -135,7 +135,7 @@ function updateColor() {
     document.documentElement.style.setProperty('--dark-text-color', currentTextColor);
     document.documentElement.style.setProperty('--blur-rate', homeBlurSwitch ? "4px" : "0");
 
-    //针对Safari -webkit-backdrop-filter 不支持css变量 进行修复
+    // Safari fix: -webkit-backdrop-filter does not support CSS variables
     document.querySelectorAll('.statusCard,thead,tbody,input')?.forEach(el => {
         homeBlurSwitch ? el.classList.add('blur-px') : el.classList.remove('blur-px')
     })
@@ -145,21 +145,21 @@ function updateColor() {
 
 
     const el = document.querySelector('body');
-    el.style.transform = 'translateZ(0)';  // 强制 GPU 图层
+    el.style.transform = 'translateZ(0)';  // Force a GPU layer
 
 
     document.querySelector('#BG_OVERLAY').style.backgroundColor = overlaySwitch ? `var(--dark-bgi-color)` : 'transparent';
-    //保存到localStorage
+    // Persist to localStorage
     localStorage.setItem('themeColor', currentHue);
 }
 
-//读取颜色数据
+// Load theme data
 const initTheme = async (sync = false) => {
     const isCloudSync = document.querySelector("#isCloudSync")
 
     const isSync = localStorage.getItem("isCloudSync", isCloudSync.checked)
     if (isSync == true || isSync == "true" || sync) {
-        // 从云端拉取主题数据
+        // Fetch theme data from the cloud
         let result = null
         try {
             result = await (await fetchWithTimeout(KANO_baseURL + "/get_theme", {
@@ -167,7 +167,7 @@ const initTheme = async (sync = false) => {
             })).json()
         } catch (e) {
             result = null
-            console.error('云端主题拉取数据失败：', e)
+            console.error('Failed to fetch theme data from cloud:', e)
         }
 
         if (result) {

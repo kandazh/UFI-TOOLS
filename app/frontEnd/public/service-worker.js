@@ -12,7 +12,7 @@ const URLS_TO_CACHE = [
   '/icons/icon-512.webp'
 ];
 
-// 检查是否支持ServiceWorker
+// Check whether ServiceWorker is supported
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -32,14 +32,14 @@ if ('serviceWorker' in navigator) {
             })
           );
         });
-        console.log('ServiceWorker注册成功:', registration);
+        console.log('ServiceWorker registered successfully:', registration);
       })
       .catch(error => {
-        console.error('ServiceWorker注册失败:', error);
+        console.error('ServiceWorker registration failed:', error);
       });
   });
 } else {
-  console.warn('当前浏览器不支持ServiceWorker');
+  console.warn('Current browser does not support ServiceWorker');
 }
 
 
