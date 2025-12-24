@@ -19,14 +19,14 @@ object SmbThrottledRunner {
 
     fun runOnceInThread(context: Context) {
         if (running.get()) {
-            KanoLog.d("kano_ZTE_LOG", "SMB 命令正在执行中，跳过")
+            KanoLog.d("kano_ZTE_LOG", "SMB command is already running, skipping")
             return
         }
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val gatewayIP = sharedPrefs.getString(PREF_GATEWAY_IP, "192.168.0.1:445")
 
-        KanoLog.d("kano_ZTE_LOG", "SMB 命令正在执行中,IP:${gatewayIP}，跳过")
+        KanoLog.d("kano_ZTE_LOG", "SMB command is starting, IP:${gatewayIP}")
 
         val host = gatewayIP?.substringBefore(":")
 
@@ -41,25 +41,25 @@ object SmbThrottledRunner {
                 try {
                     KanoLog.d(
                         "kano_ZTE_LOG",
-                        "开始执行 SMB 命令,连接到：\"smb://$host/internal_storage/\""
+                        "Starting SMB command, connecting to: \"smb://$host/internal_storage/\""
                     )
 
                     val ctx = SingletonContext.getInstance()
                     val smbFile = SmbFile("smb://$host/internal_storage/", ctx)
 
                     if (smbFile.exists()) {
-                        KanoLog.d("kano_ZTE_LOG", "SMB路径存在")
+                        KanoLog.d("kano_ZTE_LOG", "SMB path exists")
                         if (!isExecutedSambaMount) {
                             try {
                                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
                                 if (!socketPath.exists()) {
-                                    throw Exception("执行命令失败，没有找到 socat 创建的 sock (高级功能是否开启？)")
+                                    throw Exception("Command failed: socat-created sock not found (is Advanced feature enabled?)")
                                 }
                                 val result =
                                     RootShell.sendCommandToSocket(
                                         """
 SRC_LIST="/sdcard/DCIM /mnt/media_rw /storage/sdcard0"
-TGT_LIST="/data/SAMBA_SHARE/机内存储 /data/SAMBA_SHARE/外部存储 /data/SAMBA_SHARE/SD卡"
+TGT_LIST="/data/SAMBA_SHARE/internal_storage /data/SAMBA_SHARE/external_storage /data/SAMBA_SHARE/sd_card"
 
 i=1
 for src in ${'$'}SRC_LIST; do
@@ -79,30 +79,30 @@ done
                         """.trimIndent(),
                                         socketPath.absolutePath
                                     )
-                                        ?: throw Exception("请检查命令输入格式")
+                                        ?: throw Exception("Please check the command input format")
 
-                                KanoLog.d("kano_ZTE_LOG", "smb挂载执行结果： $result")
+                                KanoLog.d("kano_ZTE_LOG", "SMB bind-mount result: $result")
                                 isExecutedSambaMount = true
                             } catch (e: Exception) {
-                                KanoLog.e("kano_ZTE_LOG", "smb挂载执行失败", e)
+                                KanoLog.e("kano_ZTE_LOG", "SMB bind-mount failed", e)
                             }
                         }
                     } else {
-                        KanoLog.d("kano_ZTE_LOG", "SMB路径不存在")
+                        KanoLog.d("kano_ZTE_LOG", "SMB path does not exist")
                         needOpenSMB = true
                     }
                 } catch (e: Exception) {
-                    KanoLog.e("kano_ZTE_LOG", "SMB命令错误：${e.message}")
+                    KanoLog.e("kano_ZTE_LOG", "SMB command error: ${e.message}")
                     needOpenSMB = true
                 } finally {
                     running.set(false)
-                    KanoLog.d("kano_ZTE_LOG", "SMB 命令执行完成")
+                    KanoLog.d("kano_ZTE_LOG", "SMB command finished")
                 }
                 if (needOpenSMB) {
                     openSMB(context)
                 }
             } else {
-                KanoLog.d("kano_ZTE_LOG", "没有检测到smb配置更改，高级功能未开启，无需执行")
+                KanoLog.d("kano_ZTE_LOG", "No SMB config change detected; Advanced feature is not enabled; skipping")
                 running.set(false)
             }
         }.start()

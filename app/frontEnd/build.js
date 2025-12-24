@@ -37,7 +37,7 @@ function copyOrObfuscateFile(entryPath, outPath) {
     }
 }
 
-// 递归处理目录
+// Recursively process directory
 function processDirectory(dir, outDir) {
     const entries = fs.readdirSync(dir);
 
@@ -53,17 +53,17 @@ function processDirectory(dir, outDir) {
             if (entry.endsWith('.js') && obfuscateJsFiles.includes(entry)) {
                 copyOrObfuscateFile(entryPath, outPath);
             } else {
-                // 非 JS 文件直接复制
+                // Copy non-JS files directly
                 fs.copyFileSync(entryPath, outPath);
-                console.log(`📄 Copied (无需混淆): ${entryPath} -> ${outPath}`);
+                console.log(`📄 Copied (no obfuscation): ${entryPath} -> ${outPath}`);
             }
         }
     });
 }
 
 if (isDebug) {
-    console.log('[DEBUG] Debug 模式已启用，文件将原样复制，无混淆。');
+    console.log('[DEBUG] Debug mode enabled: files will be copied as-is (no obfuscation).');
 }
 
 processDirectory(inputDir, outputDir);
-console.log('\n✅ 所有文件处理完毕！');
+console.log('\n✅ All files processed.');

@@ -61,7 +61,7 @@ check_socat_running(){
   # check socat running
   if ! ps -ef | grep "$SOCKET_FILE" | grep -v grep > /dev/null; then
       echo "[`date`] start socat..." >> "$LOG_FILE"
-      # run socat unix socket，exec /system/bin/sh
+      # Run socat unix socket, exec /system/bin/sh
       "$SOCAT_PATH" -d -d UNIX-LISTEN:"$SOCKET_FILE",fork,reuseaddr,unlink-early EXEC:/system/bin/sh &
   else
       echo "[`date`] socat already running." >> "$LOG_FILE"
@@ -114,7 +114,7 @@ disable_fota(){
 
 samba_path(){
   SRC_LIST="/sdcard/DCIM /mnt/media_rw /storage/sdcard0"
-  TGT_LIST="/data/SAMBA_SHARE/机内存储 /data/SAMBA_SHARE/外部存储 /data/SAMBA_SHARE/SD卡"
+    TGT_LIST="/data/SAMBA_SHARE/internal_storage /data/SAMBA_SHARE/external_storage /data/SAMBA_SHARE/sd_card"
 
   i=1
   for src in $SRC_LIST; do
@@ -141,7 +141,7 @@ boot_up_script() {
   else
       echo "$BOOTUP_SH" > /sdcard/ufi_tools_boot.sh
       chmod +x /sdcard/ufi_tools_boot.sh
-      echo "[`date`] $BOOTUP_SCRIPT_PATH not found，skip" >> "$LOG_FILE"
+      echo "[`date`] $BOOTUP_SCRIPT_PATH not found, skip" >> "$LOG_FILE"
   fi
 
   #Drop port for ipv6
@@ -182,7 +182,7 @@ schedule_script() {
   else
       echo "$SCHEDULE_SH" > /sdcard/ufi_tools_schedule.sh
       chmod +x /sdcard/ufi_tools_schedule.sh
-      echo "[`date`] $SCHEDULE_SCRIPT_PATH not found，skip" >> "$LOG_FILE"
+      echo "[`date`] $SCHEDULE_SCRIPT_PATH not found, skip" >> "$LOG_FILE"
   fi
 
   lock_smb_conf

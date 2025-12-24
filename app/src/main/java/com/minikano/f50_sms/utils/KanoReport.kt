@@ -22,7 +22,7 @@ class KanoReport {
             try {
                 val uuid = UniqueDeviceIDManager.getUUID()?.trim()
                 if (uuid.isNullOrEmpty()) {
-                    KanoLog.d("kano_ZTE_LOG_report_service","UUID 为空，跳过上报")
+                    KanoLog.d("kano_ZTE_LOG_report_service","UUID is empty; skipping report")
                     return
                 }
 
@@ -50,18 +50,18 @@ class KanoReport {
                     .post(body)
                     .build()
 
-                // 切换到 IO 线程做网络请求
+                // Run network request on IO dispatcher
                 withContext(Dispatchers.IO) {
                     client.newCall(request).execute().use { resp ->
                         if (resp.isSuccessful) {
-                            KanoLog.d("kano_ZTE_LOG_report_service","上报成功: ${resp.code}")
+                            KanoLog.d("kano_ZTE_LOG_report_service","Report succeeded: ${resp.code}")
                         } else {
-                            KanoLog.e("kano_ZTE_LOG_report_service","上报失败: ${resp.code} - ${resp.message}")
+                            KanoLog.e("kano_ZTE_LOG_report_service","Report failed: ${resp.code} - ${resp.message}")
                         }
                     }
                 }
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG_report_service","上报失败:",e)
+                KanoLog.e("kano_ZTE_LOG_report_service","Report failed:",e)
                 e.printStackTrace()
             }
         }
@@ -79,10 +79,10 @@ class KanoReport {
 
         suspend fun getRemoteDeviceRegisterItem(uuid: String): Report? = withContext(Dispatchers.IO) {
             val client = OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.SECONDS)  // 连接超时
-                .readTimeout(1, TimeUnit.SECONDS)     // 读取超时
-                .writeTimeout(1, TimeUnit.SECONDS)    // 写入超时
-                .retryOnConnectionFailure(false)  // 关闭失败重试
+                .connectTimeout(1, TimeUnit.SECONDS)  // connect timeout
+                .readTimeout(1, TimeUnit.SECONDS)     // read timeout
+                .writeTimeout(1, TimeUnit.SECONDS)    // write timeout
+                .retryOnConnectionFailure(false)  // disable retries
                 .build()
             val url = "$BASE_URL/report/$uuid"
             val request = Request.Builder()
@@ -93,7 +93,7 @@ class KanoReport {
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    KanoLog.e("kano_ZTE_LOG_devcheck", "请求失败，code=${response.code}")
+                    KanoLog.e("kano_ZTE_LOG_devcheck", "Request failed, code=${response.code}")
                     return@withContext null
                 }
                 val bodyStr = response.body?.string() ?: return@withContext null

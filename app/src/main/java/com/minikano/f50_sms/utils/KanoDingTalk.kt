@@ -18,13 +18,13 @@ class KanoDingTalk(
     private val webhookUrl: String,
     private val secret: String? = null
 ) {
-    // 防止重复发送
+    // Prevent duplicate sends
     private val isSending = AtomicBoolean(false)
 
     fun sendMessage(content: String) {
-        // 如果已经在发送中，则直接返回
+        // If already sending, return immediately
         if (!isSending.compareAndSet(false, true)) {
-            KanoLog.w("kano_ZTE_LOG_DingTalk", "钉钉消息正在发送中，忽略重复发送")
+            KanoLog.w("kano_ZTE_LOG_DingTalk", "DingTalk message is already being sent; ignoring duplicate")
             return
         }
 
@@ -33,7 +33,7 @@ class KanoDingTalk(
                 val client = OkHttpClient()
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 
-                // 构建消息内容
+                // Build message payload
                 val messageJson = """
                 {
                     "msgtype": "text",
@@ -43,7 +43,7 @@ class KanoDingTalk(
                 }
                 """.trimIndent()
 
-                // 计算签名（如果提供了secret）
+                // Calculate signature (if secret is provided)
                 val finalUrl = if (!secret.isNullOrEmpty()) {
                     val timestamp = System.currentTimeMillis()
                     val stringToSign = "$timestamp\n$secret"
@@ -63,18 +63,18 @@ class KanoDingTalk(
                     .post(body)
                     .build()
 
-                KanoLog.d("kano_ZTE_LOG_DingTalk", "开始发送钉钉消息...")
+                KanoLog.d("kano_ZTE_LOG_DingTalk", "Sending DingTalk message...")
                 val response = client.newCall(request).execute()
                 
                 if (response.isSuccessful) {
-                    KanoLog.d("kano_ZTE_LOG_DingTalk", "钉钉消息发送成功")
+                    KanoLog.d("kano_ZTE_LOG_DingTalk", "DingTalk message sent successfully")
                 } else {
-                    KanoLog.e("kano_ZTE_LOG_DingTalk", "钉钉消息发送失败: ${response.code}")
+                    KanoLog.e("kano_ZTE_LOG_DingTalk", "Failed to send DingTalk message: ${response.code}")
                 }
                 
                 response.close()
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG_DingTalk", "钉钉消息发送异常: ${e.message}", e)
+                KanoLog.e("kano_ZTE_LOG_DingTalk", "Exception while sending DingTalk message: ${e.message}", e)
             } finally {
                 isSending.set(false)
             }

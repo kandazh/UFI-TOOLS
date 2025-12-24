@@ -22,7 +22,7 @@ fun Route.configModule(context: Context) {
     val PREFS_NAME = "kano_ZTE_store"
     val PREF_LOGIN_TOKEN = "login_token"
 
-    //检查是否默认口令
+    // Check whether token is default/weak
     get("/api/is_weak_token") {
         try {
             val jsonResult = """{"is_weak_token":${AppMeta.isDefaultOrWeakToken}}""".trimIndent()
@@ -30,17 +30,17 @@ fun Route.configModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取是否弱Token出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get is_weak_token: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取是否弱Token出错"}""",
+                """{"error":"Failed to get is_weak_token"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //设置口令
+    // Set token
     post("/api/set_token") {
         try {
             val body = call.receiveText()
@@ -48,18 +48,18 @@ fun Route.configModule(context: Context) {
 
             val token = json.optString("token", "").trim()
             if (token.isEmpty() || token.isBlank()) {
-                throw IllegalArgumentException("请提供 token")
+                throw IllegalArgumentException("Please provide token")
             }
 
             val regex = Regex("^(?=.*[a-zA-Z])(?=.*\\d).{8,128}$")
             if(token.length < 8) {
-                throw IllegalArgumentException("token 需要至少8位")
+                throw IllegalArgumentException("Token must be at least 8 characters")
             }
             else if(!regex.matches(token)) {
-                throw IllegalArgumentException("口令需要至少同时包含数字和字母")
+                throw IllegalArgumentException("Token must contain at least letters and digits")
             }
 
-            KanoLog.d(TAG, "接收到 token=$token")
+            KanoLog.d(TAG, "Received token=$token")
 
             val pref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             pref.edit(commit = true) {
@@ -74,20 +74,20 @@ fun Route.configModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "设置口令出错：${e.message}")
+            KanoLog.d(TAG, "Failed to set token: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"${e.message ?: "未知错误"}"}""",
+                """{"error":"${e.message ?: "Unknown error"}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //获取全局服务器地址
+    // Get global resource server URL
     get("/api/get_res_server") {
         try {
-            // 拼装 JSON 响应
+            // Build JSON response
             val resultJson = """{
                 "res_server": "${AppMeta.GLOBAL_SERVER_URL}"
             }""".trimIndent()
@@ -95,17 +95,17 @@ fun Route.configModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(resultJson, ContentType.Application.Json, HttpStatusCode.OK)
         } catch (e: Exception) {
-            KanoLog.d(TAG, "请求出错：${e.message}")
+            KanoLog.d(TAG, "Request failed: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"请求出错"}""",
+                """{"error":"Request failed"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //设置资源服务器
+    // Set resource server URL
     post("/api/set_res_server") {
         try {
             val body = call.receiveText()
@@ -113,10 +113,10 @@ fun Route.configModule(context: Context) {
 
             val resServerUrl = json.optString("res_server", "").trim()
             if (resServerUrl.isEmpty() || resServerUrl.isBlank()) {
-                throw IllegalArgumentException("请提供 res_server")
+                throw IllegalArgumentException("Please provide res_server")
             }
 
-            KanoLog.d(TAG, "接收到 res_server=$resServerUrl")
+            KanoLog.d(TAG, "Received res_server=$resServerUrl")
 
             AppMeta.setGlobalServerUrl(context, resServerUrl)
 
@@ -127,20 +127,20 @@ fun Route.configModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "设置resServerUrl出错：${e.message}")
+            KanoLog.d(TAG, "Failed to set resServerUrl: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"${e.message ?: "未知错误"}"}""",
+                """{"error":"${e.message ?: "Unknown error"}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //获取日志开关状态
+    // Get debug log switch status
     get("/api/get_log_status") {
         try {
-            // 拼装 JSON 响应
+            // Build JSON response
             val resultJson = """{
                 "debug_log_enabled": "${AppMeta.isEnableLog}"
             }""".trimIndent()
@@ -148,17 +148,17 @@ fun Route.configModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(resultJson, ContentType.Application.Json, HttpStatusCode.OK)
         } catch (e: Exception) {
-            KanoLog.d(TAG, "请求出错：${e.message}")
+            KanoLog.d(TAG, "Request failed: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"请求出错"}""",
+                """{"error":"Request failed"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //设置日志开关状态
+    // Set debug log switch status
     post("/api/set_log_status") {
         try {
             val body = call.receiveText()
@@ -166,7 +166,7 @@ fun Route.configModule(context: Context) {
 
             val debugEnabled = json.optBoolean("debug_log_enabled", false)
 
-            KanoLog.d(TAG, "接收到 debug_log_enabled=$debugEnabled")
+            KanoLog.d(TAG, "Received debug_log_enabled=$debugEnabled")
 
             AppMeta.setIsEnableLog(context, debugEnabled)
 
@@ -177,10 +177,10 @@ fun Route.configModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "设置debug_log_enabled出错：${e.message}")
+            KanoLog.d(TAG, "Failed to set debug_log_enabled: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"${e.message ?: "未知错误"}"}""",
+                """{"error":"${e.message ?: "Unknown error"}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

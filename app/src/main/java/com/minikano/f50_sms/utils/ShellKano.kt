@@ -54,10 +54,10 @@ class ShellKano {
         fun runShellCommand(command: String?, context: Context): String? {
             val output = StringBuilder()
             try {
-                // 设置 HOME 环境变量
+                // Set HOME environment variable
                 val env = arrayOf("HOME=${context.filesDir.absolutePath}")
 
-                // 启动进程（传入环境变量）
+                // Start process (with environment variables)
                 val process = Runtime.getRuntime().exec(command, env)
 
                 val reader = BufferedReader(
@@ -82,19 +82,19 @@ class ShellKano {
         }
 
         /**
-         * adb寻找ui控件然后点击
+         * Find a UI element via adb and tap it.
          * @return 1 0 -1
-         * 1表示已经在AT发送界面了
-         * 0表示执行点击成功
-         * -1表示执行失败 没有找到任何文本
+         * 1 means we're already on the AT send page
+         * 0 means the tap was executed successfully
+         * -1 means execution failed (no matching text found)
          */
         fun parseUiDumpAndClick(targetText: String, adbPath: String, context: Context): Number {
             val cacheFile = getUiDoc(adbPath, context)
 
             val doc = cacheFile
-            KanoLog.d("kano_ZTE_LOG", "doc 读取 结果：${doc.getElementsByTagName("node")}")
+            KanoLog.d("kano_ZTE_LOG", "doc read result: ${doc.getElementsByTagName("node")}")
 
-            //tap逻辑
+            // Tap logic
             val nodes = doc.getElementsByTagName("node")
             for (i in 0 until nodes.length) {
                 val node = nodes.item(i)
@@ -112,11 +112,11 @@ class ShellKano {
                         "$adbPath -s localhost shell input tap $tapX $tapY",
                         context
                     )
-                        ?: throw Exception("执行 input tap 失败")
-                    KanoLog.d("kano_ZTE_LOG", "input tap 点击 坐标：$tapX,$tapY 结果：${result} ")
+                        ?: throw Exception("Failed to execute input tap")
+                    KanoLog.d("kano_ZTE_LOG", "input tap at: $tapX,$tapY result: ${result} ")
                     return 0
                 } else if (text.contains("AT Command:")) {
-                    //说明已经在AT页面了
+                    // Already on the AT page
                     return 1
                 }
             }
@@ -124,7 +124,7 @@ class ShellKano {
         }
 
         /**
-         * 填写input内容然后发送AT指令
+         * Fill the input field and send an AT command.
          */
         fun fillInputAndSend(
             inputText: String,
@@ -138,10 +138,10 @@ class ShellKano {
             val doc = getUiDoc(adbPath, context)
             val nodes = doc.getElementsByTagName("node")
             val escapedInput = inputText.replace(" ", "%s")
-            //复制文本到剪贴板
+            // Copy text to clipboard
             KanoUtils.copyToClipboard(context, "sambaCommand", inputText)
 
-            // 寻找输入框
+            // Find the input field
             var inputClicked = false
             for (i in 0 until nodes.length) {
                 val node = nodes.item(i)
@@ -161,20 +161,20 @@ class ShellKano {
                             "$adbPath -s localhost shell input tap $tapX $tapY",
                             context
                         )
-                        KanoLog.d("kano_ZTE_LOG", "点击输入框坐标：$tapX,$tapY")
+                        KanoLog.d("kano_ZTE_LOG", "Tap input field at: $tapX,$tapY")
                     }
 
-                    // 输入文本
+                    // Enter text
                     if (!useClipBoard) {
-                        Thread.sleep(200) // 稍等软键盘弹出
+                        Thread.sleep(200) // Wait for the soft keyboard to appear
                         runShellCommand(
                             "$adbPath -s localhost shell input text \"$escapedInput\"",
                             context
                         )
-                        KanoLog.d("kano_ZTE_LOG", "输入文本：$inputText")
+                        KanoLog.d("kano_ZTE_LOG", "Entered text: $inputText")
                         inputClicked = true
                         if (escapedInput.length > 20) {
-                            Thread.sleep(500) // 稍等输入完毕
+                            Thread.sleep(500) // Wait for input to finish
                         }
                         break
                     } else {
@@ -182,18 +182,18 @@ class ShellKano {
                             "$adbPath -s localhost shell input keyevent KEYCODE_PASTE",
                             context
                         )
-                        KanoLog.d("kano_ZTE_LOG", "读取剪贴板，输入文本：$inputText")
+                        KanoLog.d("kano_ZTE_LOG", "Pasted from clipboard, text: $inputText")
                         inputClicked = true
-                        Thread.sleep(666) // 稍等输入完毕
+                        Thread.sleep(666) // Wait for input to finish
                         break
                     }
                 }
             }
 
-            if (!inputClicked) throw Exception("未找到 EditText 输入框")
+            if (!inputClicked) throw Exception("EditText input not found")
 
             fun getBtnAndClick(nodes_after: NodeList): String? {
-                //找到按钮点击
+                // Find the button and tap it
                 for (i in 0 until nodes_after.length) {
                     val node = nodes_after.item(i)
                     val attrs = node.attributes
@@ -212,14 +212,14 @@ class ShellKano {
                         )
                         KanoLog.d(
                             "kano_ZTE_LOG",
-                            "点击 ${btnName.joinToString(", ")} 坐标：$tapX,$tapY"
+                            "Tap ${btnName.joinToString(", ")} at: $tapX,$tapY"
                         )
-                        //继续检测result
+                        // Continue checking result
                         if (resId != "") {
                             val res = getTextFromUIByResourceId(resId, adbPath, context)
                             if (needBack) {
-                                //返回就完事了
-                                Thread.sleep(800) // 稍等输入完毕
+                                // Go back and finish
+                                Thread.sleep(800) // Wait for input to finish
                                 repeat(10) {
                                     runShellCommand(
                                         "$adbPath -s localhost shell input keyevent KEYCODE_BACK",
@@ -230,8 +230,8 @@ class ShellKano {
                             return res[0]
                         } else {
                             if (needBack) {
-                                //返回就完事了
-                                Thread.sleep(800) // 稍等输入完毕
+                                // Go back and finish
+                                Thread.sleep(800) // Wait for input to finish
                                 repeat(10) {
                                     runShellCommand(
                                         "$adbPath -s localhost shell input keyevent KEYCODE_BACK",
@@ -261,25 +261,25 @@ class ShellKano {
                 return res as String
             }
 
-            throw Exception("未找到 ${btnName.joinToString(", ")} 按钮")
+            throw Exception("Button not found: ${btnName.joinToString(", ")}")
         }
 
         fun createShellScript(context: Context, fileName: String, scriptContent: String): File {
             val scriptFile = File(context.getExternalFilesDir(null), fileName)
 
             try {
-                // 如果文件已存在，删除旧文件
+                // If the file exists, delete the old file
                 if (scriptFile.exists()) {
                     scriptFile.delete()
                 }
             } catch (e: Exception) {
-                KanoLog.d("kano_ZTE_LOG", "删除脚本出错：${e.message}")
+                KanoLog.d("kano_ZTE_LOG", "Failed to delete script: ${e.message}")
             }
 
-            // 写入内容（writeText 本身就是覆盖写入）
+            // Write content (writeText overwrites)
             scriptFile.writeText(scriptContent)
 
-            // 设置执行权限（某些设备需要删除后重新设置权限才生效）
+            // Set executable permission (some devices require re-setting it after deletion)
             scriptFile.setExecutable(true)
 
             return scriptFile
@@ -308,56 +308,56 @@ class ShellKano {
 
             KanoLog.d(
                 "kano_ZTE_LOG",
-                "根据：$resId 共找到${resultTexts.size}条 result_text 文本：$resultTexts"
+                "For: $resId, found ${resultTexts.size} result_text values: $resultTexts"
             )
             return resultTexts
         }
 
-        //获取UI
+        // Get UI
         private fun getUiDoc(adbPath: String, context: Context, maxRetry: Int = 3): Document {
-            if (adbPath.isEmpty()) throw Exception("需要 adbPath")
+            if (adbPath.isEmpty()) throw Exception("adbPath is required")
 
             repeat(maxRetry) { attempt ->
                 try {
 
-                    // 清除旧的 XML
+                    // Clear old XML
                     runShellCommand("$adbPath -s localhost shell rm /sdcard/kano_ui.xml", context)
                     Thread.sleep(200)
 
-                    // dump 当前 UI
+                    // Dump current UI
                     runShellCommand(
                         "$adbPath -s localhost shell uiautomator dump /sdcard/kano_ui.xml",
                         context
                     )
-                        ?: throw Exception("uiautomator dump 失败")
+                        ?: throw Exception("uiautomator dump failed")
 
                     Thread.sleep(300)
 
-                    // cat 读取 XML 内容
+                    // Read XML content via cat
                     val xmlContent = runShellCommand(
                         "$adbPath -s localhost shell cat /sdcard/kano_ui.xml",
                         context
                     )
-                        ?: throw Exception("cat kano_ui.xml 失败")
+                        ?: throw Exception("Failed to cat kano_ui.xml")
 
                     if (!xmlContent.trim().endsWith("</hierarchy>")) {
-                        KanoLog.w("kano_ZTE_LOG", "UI XML 不完整，第 ${attempt + 1} 次尝试")
+                        KanoLog.w("kano_ZTE_LOG", "UI XML is incomplete, attempt ${attempt + 1}")
                         Thread.sleep(200)
                         return@repeat
                     }
 
-                    // 转换为 Document
+                    // Convert to Document
                     val factory = DocumentBuilderFactory.newInstance()
                     val builder = factory.newDocumentBuilder()
                     val inputStream = xmlContent.byteInputStream()
                     return builder.parse(inputStream)
                 } catch (e: Exception) {
-                    KanoLog.e("kano_ZTE_LOG", "解析 UI XML 失败，第 ${attempt + 1} 次：${e.message}")
+                    KanoLog.e("kano_ZTE_LOG", "Failed to parse UI XML, attempt ${attempt + 1}: ${e.message}")
                     Thread.sleep(200)
                 }
             }
 
-            throw Exception("多次尝试后仍无法获取完整的 UI dump")
+            throw Exception("Unable to get a complete UI dump after multiple attempts")
         }
 
 
@@ -372,18 +372,18 @@ class ShellKano {
                         val tokens = line.trim().split(Regex("\\s+"))
                         if (tokens.size > 1) {
                             val pid = tokens[1]
-                            KanoLog.w("kano_ZTE_LOG", "匹配到进程: $line，准备 kill -9 $pid")
+                            KanoLog.w("kano_ZTE_LOG", "Matched process: $line, preparing to kill -9 $pid")
                             try {
                                 ProcessBuilder("kill", "-9", pid).start().waitFor()
-                                KanoLog.w("kano_ZTE_LOG", "已 kill -9 $pid")
+                                KanoLog.w("kano_ZTE_LOG", "Killed -9 $pid")
                             } catch (e: Exception) {
-                                KanoLog.e("kano_ZTE_LOG", "kill -9 $pid 失败: ${e.message}")
+                                KanoLog.e("kano_ZTE_LOG", "kill -9 $pid failed: ${e.message}")
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "killProcessByName 执行失败: ${e.message}")
+                KanoLog.e("kano_ZTE_LOG", "killProcessByName failed: ${e.message}")
             }
         }
 
@@ -391,8 +391,8 @@ class ShellKano {
             context: Context,
             assetSubPath: String,
             vararg args: String,
-            timeoutMs: Long = 20000,  // 默认最多等20秒
-            onTimeout: (() -> Unit)? = null  // 超时回调
+            timeoutMs: Long = 20000,  // Default: wait up to 20 seconds
+            onTimeout: (() -> Unit)? = null  // Timeout callback
         ): String? {
             return try {
                 val assetManager = context.assets
@@ -406,9 +406,9 @@ class ShellKano {
                             input.copyTo(output)
                         }
                     }
-                    KanoLog.d("kano_ZTE_LOG", "${outFile} 文件复制完成")
+                    KanoLog.d("kano_ZTE_LOG", "${outFile} file copy completed")
                 } else {
-                    KanoLog.d("kano_ZTE_LOG", "${outFile} 文件已存在，无需复制")
+                    KanoLog.d("kano_ZTE_LOG", "${outFile} already exists, no need to copy")
                 }
 
                 outFile.setExecutable(true)
@@ -418,7 +418,7 @@ class ShellKano {
                     addAll(args)
                 }
 
-                KanoLog.d("kano_ZTE_LOG", "执行命令: ${command.joinToString(" ")}")
+                KanoLog.d("kano_ZTE_LOG", "Executing command: ${command.joinToString(" ")}")
 
                 val process = ProcessBuilder(command)
                     .redirectErrorStream(true)
@@ -427,7 +427,7 @@ class ShellKano {
                     }
                     .start()
 
-                // 启动线程读输出
+                // Start a thread to read output
                 val outputBuilder = StringBuilder()
                 val readerThread = Thread {
                     try {
@@ -435,72 +435,72 @@ class ShellKano {
                             outputBuilder.appendLine(it)
                         }
                     } catch (e: Exception) {
-                        KanoLog.w("kano_ZTE_LOG", "读取进程输出异常：${e.message}")
+                        KanoLog.w("kano_ZTE_LOG", "Error reading process output: ${e.message}")
                     }
                 }
                 readerThread.start()
 
-                // 最多等待 timeoutMs 毫秒
+                // Wait up to timeoutMs milliseconds
                 val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
 
                 if (!finished) {
-                    KanoLog.w("kano_ZTE_LOG", "执行超时，强制销毁进程")
+                    KanoLog.w("kano_ZTE_LOG", "Execution timed out; force-destroying process")
                     process.destroy()
 
-                    // 调用回调
+                    // Invoke callback
                     onTimeout?.invoke()
                 }
 
-                readerThread.join(100) // 最多等 100ms 等输出读完
+                readerThread.join(100) // Wait up to 100ms for output reading to finish
                 outputBuilder.toString().trim()
 
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "执行异常: ${e.message}")
+                KanoLog.e("kano_ZTE_LOG", "Execution error: ${e.message}")
                 null
             }
         }
 
-        //检测adb存活
+        // Ensure ADB is alive
         fun ensureAdbAlive(context: Context): Boolean {
             try {
                 val adbPath = "shell/adb"
 
-                // 第一次检测
+                // First check
                 var result = executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices")
-                KanoLog.d("kano_ZTE_LOG", "adb device 执行状态：$result")
+                KanoLog.d("kano_ZTE_LOG", "adb devices output: $result")
 
                 if (result?.contains("localhost:5555\tdevice") == true) {
-                    KanoLog.d("kano_ZTE_LOG", "adb存活，无需启动")
+                    KanoLog.d("kano_ZTE_LOG", "ADB is alive; no need to start")
                     return true
                 }
 
-                KanoLog.w("kano_ZTE_LOG", "adb无设备或已退出，尝试启动")
+                KanoLog.w("kano_ZTE_LOG", "No ADB device or ADB has exited; trying to start")
 
-                // 重启 ADB server
+                // Restart ADB server
                 executeShellFromAssetsSubfolderWithArgs(context, adbPath, "kill-server")
                 Thread.sleep(1000)
                 executeShellFromAssetsSubfolderWithArgs(context, adbPath, "connect", "localhost")
 
-                // 等待最多 10 秒，设备变为 "device"
+                // Wait up to 10 seconds for the device to become "device"
                 val maxWaitMs = 10_000
                 val interval = 500
                 var waited = 0
 
                 while (waited < maxWaitMs) {
                     result = executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices")
-                    KanoLog.d("kano_ZTE_LOG", "等待 ADB 启动中：$result")
+                    KanoLog.d("kano_ZTE_LOG", "Waiting for ADB to start: $result")
                     if (result?.contains("localhost:5555\tdevice") == true) {
-                        KanoLog.d("kano_ZTE_LOG", "ADB连接成功")
+                        KanoLog.d("kano_ZTE_LOG", "ADB connected")
                         return true
                     }
                     Thread.sleep(interval.toLong())
                     waited += interval
                 }
 
-                KanoLog.e("kano_ZTE_LOG", "等待ADB device超时")
+                KanoLog.e("kano_ZTE_LOG", "Timed out waiting for ADB device")
                 return false
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "检测/启动ADB失败: ${e.message}")
+                KanoLog.e("kano_ZTE_LOG", "Failed to check/start ADB: ${e.message}")
                 return false
             }
         }
@@ -535,7 +535,7 @@ class ShellKano {
 
                 return output
             } catch (e: Exception) {
-                KanoLog.d("kano_ZTE_LOG", "执行出错：${e.message}")
+                KanoLog.d("kano_ZTE_LOG", "Execution error: ${e.message}")
                 e.printStackTrace()
             }
 
@@ -544,25 +544,25 @@ class ShellKano {
 
 
         fun runADB(context: Context) {
-            //网络adb
+            // Network ADB
             //adb setprop service.adb.tcp.port 5555
             Thread {
                 try {
                     runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
                     runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
-                    Log.d("kano_ZTE_LOG", "网络adb调试prop执行成功")
+                    Log.d("kano_ZTE_LOG", "Network ADB debug props set successfully")
                 } catch (e: Exception) {
                     try {
                         runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
                         runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
-                        Log.d("kano_ZTE_LOG", "网络adb调试prop执行成功")
+                        Log.d("kano_ZTE_LOG", "Network ADB debug props set successfully")
                     } catch (e: Exception) {
-                        Log.d("kano_ZTE_LOG", "网络adb调试prop执行出错： ${e.message}")
+                        Log.d("kano_ZTE_LOG", "Failed to set network ADB debug props: ${e.message}")
                     }
                 }
                 Thread.sleep(500)
                 try {
-                    Log.d("kano_ZTE_LOG", "开始进入adb_ip激活流程")
+                    Log.d("kano_ZTE_LOG", "Starting adb_ip activation flow")
 
                     val sharedPrefs =
                         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -574,12 +574,12 @@ class ShellKano {
                     if (ADB_IP_ENABLED == "true") {
                         val ADB_IP =
                             sharedPrefs.getString("gateway_ip", "")?.substringBefore(":")
-                                ?: throw Exception("没有ADMIN_IP")
+                                ?: throw Exception("Missing ADMIN_IP")
                         val ADMIN_PWD =
                             sharedPrefs.getString("ADMIN_PWD","Wa@9w+YWRtaW4=") ?: "Wa@9w+YWRtaW4="
 
                         Log.d(
-                            "kano_ZTE_LOG", "读取网络ADB所需配置：ADB_IP:${
+                            "kano_ZTE_LOG", "Loaded network ADB config: ADB_IP:${
                                 ADB_IP
                             } ADMIN_PWD:${
                                 ADMIN_PWD.take(2)
@@ -599,18 +599,18 @@ class ShellKano {
                                             "cmd" to "loginfo"
                                         )
                                     )
-                                    KanoLog.d("kano_ZTE_LOG", "尝试连接：$result")
+                                    KanoLog.d("kano_ZTE_LOG", "Attempting connection: $result")
                                     if (result != null) {
-                                        KanoLog.d("kano_ZTE_LOG", "http://$ip:8080 可访问")
+                                        KanoLog.d("kano_ZTE_LOG", "http://$ip:8080 is reachable")
                                         return true
                                     }
                                 } catch (e: Exception) {
-                                    KanoLog.d("kano_ZTE_LOG", "连接异常: ${e.message}")
+                                    KanoLog.d("kano_ZTE_LOG", "Connection error: ${e.message}")
                                 }
                                 delay(intervalMillis)
                             }
 
-                            KanoLog.e("kano_ZTE_LOG", "http://$ip:8080 在 $timeoutSeconds 秒内不可访问")
+                            KanoLog.e("kano_ZTE_LOG", "http://$ip:8080 not reachable within $timeoutSeconds seconds")
                             return false
                         }
 
@@ -618,7 +618,7 @@ class ShellKano {
                             runBlocking {
                                 val reachable = waitUntilReachable(ADB_IP, 30)
                                 if (!reachable) {
-                                    KanoLog.e("kano_ZTE_LOG", "官方WEB服务不可达，终止执行ADB自启操作")
+                                    KanoLog.e("kano_ZTE_LOG", "Official web service unreachable; aborting ADB auto-start")
                                     return@runBlocking
                                 }
 
@@ -631,7 +631,7 @@ class ShellKano {
                                             "usb_port_switch" to "0"
                                         )
                                     )
-                                    KanoLog.d("kano_ZTE_LOG", "关闭ADBD结果: $result1")
+                                    KanoLog.d("kano_ZTE_LOG", "Disable ADBD result: $result1")
                                     delay(500)
                                     val result2 = req.postData(
                                         cookie, mapOf(
@@ -639,7 +639,7 @@ class ShellKano {
                                             "usb_port_switch" to "1"
                                         )
                                     )
-                                    KanoLog.d("kano_ZTE_LOG", "开启ADBD结果: $result2")
+                                    KanoLog.d("kano_ZTE_LOG", "Enable ADBD result: $result2")
 
                                     val result3 = req.postData(
                                         cookie, mapOf(
@@ -650,7 +650,7 @@ class ShellKano {
                                         )
                                     )
 
-                                    KanoLog.d("kano_ZTE_LOG", "禁用FOTA结果: $result3")
+                                    KanoLog.d("kano_ZTE_LOG", "Disable FOTA result: $result3")
 
                                     val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep internal_storage")
 
@@ -661,24 +661,24 @@ class ShellKano {
                                                 "samba_switch" to "1",
                                             )
                                         )
-                                        KanoLog.d("kano_ZTE_LOG", "开启samba结果: $result")
+                                        KanoLog.d("kano_ZTE_LOG", "Enable samba result: $result")
                                     }
 
                                     req.logout(cookie)
                                     if (result1?.getString("result") == "success" && result2?.getString("result") == "success") {
-                                        KanoLog.d("kano_ZTE_LOG", "ADB_WIFI自启动执行成功")
+                                        KanoLog.d("kano_ZTE_LOG", "ADB_WIFI auto-start succeeded")
                                     }
                                 }
                             }
 
                         } catch (e: Exception) {
-                            KanoLog.e("kano_ZTE_LOG", "ADB_WIFI执行错误: ${e.message}")
+                            KanoLog.e("kano_ZTE_LOG", "ADB_WIFI error: ${e.message}")
                         }
                     } else {
-                        Log.d("kano_ZTE_LOG", "不需要自启动ADB_WIFI")
+                        Log.d("kano_ZTE_LOG", "ADB_WIFI auto-start not needed")
                     }
                 } catch (e: Exception) {
-                    Log.d("kano_ZTE_LOG", "ADB_WIFI自启动执行错误：${e.message}")
+                    Log.d("kano_ZTE_LOG", "ADB_WIFI auto-start error: ${e.message}")
                     e.printStackTrace()
                 }
 
@@ -691,7 +691,7 @@ class ShellKano {
         }
 
         fun openSMB (context: Context){
-            //samba开关关闭了，立马拉起
+            // If the samba switch is off, bring it up immediately
             try {
                 val open_command = "settings put global samba_enable 1"
                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
@@ -700,25 +700,25 @@ class ShellKano {
                     val outFile_adb = KanoUtils.copyFileToFilesDir(context, "shell/adb")
                     if(outFile_adb != null){
                         outFile_adb.setExecutable(true)
-                        KanoLog.d("kano_ZTE_LOG", "samba被关闭了，尝试打开(使用adb方式)...")
+                        KanoLog.d("kano_ZTE_LOG", "Samba is off; trying to enable (via adb)...")
                         val res = runShellCommand(
                             "${outFile_adb.absolutePath} -s localhost shell $open_command",
                             context
                         )
-                        KanoLog.d("kano_ZTE_LOG", "使用adb方式打开samba结果：$res")
+                        KanoLog.d("kano_ZTE_LOG", "Enable samba via adb result: $res")
                     }
                 }
 
                 if (socketPath.exists()) {
-                    KanoLog.d("kano_ZTE_LOG", "samba被关闭了，尝试打开(使用root方式)...")
+                    KanoLog.d("kano_ZTE_LOG", "Samba is off; trying to enable (via root)...")
                     val res =  RootShell.sendCommandToSocket(open_command.trimIndent(),
                         socketPath.absolutePath,
                         2000
                     )
-                    KanoLog.d("kano_ZTE_LOG", "使用root方式打开samba结果：$res")
+                    KanoLog.d("kano_ZTE_LOG", "Enable samba via root result: $res")
                 }
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "smb打开执行失败", e)
+                KanoLog.e("kano_ZTE_LOG", "Failed to enable SMB", e)
             }
         }
     }

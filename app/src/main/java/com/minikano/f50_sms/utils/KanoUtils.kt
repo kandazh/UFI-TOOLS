@@ -59,7 +59,7 @@ class KanoUtils {
             return digest.joinToString("") { "%02x".format(it) }
         }
 
-        //获取电池电量
+        // Get battery percentage
         fun getBatteryPercentage(context: Context): Int {
             val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
             val batteryStatus = context.registerReceiver(null, filter) ?: return -1
@@ -125,7 +125,7 @@ class KanoUtils {
             return totalBytes
         }
 
-        // 解析 URL 编码的请求体
+        // Parse URL-encoded request body
         fun parseUrlEncoded(data: String): Map<String, String> {
             val params = mutableMapOf<String, String>()
             val pairs = data.split("&")
@@ -135,7 +135,7 @@ class KanoUtils {
                 if (keyValue.size == 2) {
                     val key = keyValue[0]
                     val value = keyValue[1]
-                    params[key] = java.net.URLDecoder.decode(value, Charsets.UTF_8.name())  // 解码
+                    params[key] = java.net.URLDecoder.decode(value, Charsets.UTF_8.name())  // Decode
                 }
             }
 
@@ -143,7 +143,7 @@ class KanoUtils {
         }
 
 
-        //获取内存信息
+    // Parse /proc/meminfo
         fun parseMeminfo(meminfo: String): Float {
             val memMap = mutableMapOf<String, Long>()
 
@@ -211,39 +211,39 @@ class KanoUtils {
             val fileName = File(path).name
             val outFile = File(context.filesDir, fileName)
 
-            // 如果是追加模式且目标文件已存在，则直接返回该文件，避免干扰可执行文件的运行
+            // If skipIfExists is enabled and the file already exists, return it to avoid interfering with executable usage.
             if (skipIfExists && outFile.exists()) {
-                KanoLog.d("kano_ZTE_LOG", "文件已存在，跳过复制：${outFile.absolutePath}")
+                KanoLog.d("kano_ZTE_LOG", "File already exists, skipping copy: ${outFile.absolutePath}")
                 return outFile
             }
 
             val input = try {
                 assetManager.open(path)
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "assets 中不存在文件: $path")
+                KanoLog.e("kano_ZTE_LOG", "Asset file not found: $path")
                 return null
             }
 
             return try {
                 KanoLog.d(
                     "kano_ZTE_LOG",
-                    "开始复制 $fileName 到 ${context.filesDir}（skipIfExists？：$skipIfExists）"
+                    "Copying $fileName to ${context.filesDir} (skipIfExists: $skipIfExists)"
                 )
                 input.use { ins ->
                     FileOutputStream(outFile, skipIfExists).use { out ->
                         ins.copyTo(out)
                     }
                 }
-                KanoLog.d("kano_ZTE_LOG", "复制 $fileName 成功 -> ${outFile.absolutePath}")
+                KanoLog.d("kano_ZTE_LOG", "Copied $fileName successfully -> ${outFile.absolutePath}")
                 outFile
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "复制 $fileName 失败: ${e.message}")
+                KanoLog.e("kano_ZTE_LOG", "Failed to copy $fileName: ${e.message}")
                 null
             }
         }
 
         fun parseShellArgs(command: String): List<String> {
-            val matcher = Regex("""(["'])(.*?)(?<!\\)\1|(\S+)""") // 处理单引号/双引号/无引号的参数
+            val matcher = Regex("""(["'])(.*?)(?<!\\)\1|(\S+)""") // Handles single-quoted/double-quoted/unquoted args
             return matcher.findAll(command).map {
                 val quoted = it.groups[2]?.value
                 val plain = it.groups[3]?.value
@@ -275,36 +275,36 @@ class KanoUtils {
             val currentIp = IPManager.getHotspotGatewayIp("8080")
 
             if ((ip_add != null && need_auto_ip == "true") || userTouched) {
-                KanoLog.d("kano_ZTE_LOG", "自动检测IP网关:$currentIp")
+                KanoLog.d("kano_ZTE_LOG", "Auto-detected gateway IP: $currentIp")
                 if (currentIp == null) {
-                    KanoLog.d("kano_ZTE_LOG", "自动检测IP网关失败")
-                    Toast.makeText(context, "自动检测IP网关失败...", Toast.LENGTH_SHORT).show()
+                    KanoLog.d("kano_ZTE_LOG", "Failed to auto-detect gateway IP")
+                    Toast.makeText(context, "Failed to auto-detect gateway IP...", Toast.LENGTH_SHORT).show()
                     return
                 }
                 if ((currentIp != ip_add) || userTouched) {
                     if (userTouched) {
-                        KanoLog.d("kano_ZTE_LOG", "用户点击，自动检测IP网关")
-                        Toast.makeText(context, "自动检测IP网关~", Toast.LENGTH_SHORT).show()
+                        KanoLog.d("kano_ZTE_LOG", "User triggered gateway IP auto-detection")
+                        Toast.makeText(context, "Auto-detecting gateway IP...", Toast.LENGTH_SHORT).show()
                     } else {
                         KanoLog.d(
                             "kano_ZTE_LOG",
-                            "检测到本地IP网关变动，自动修改IP网关为:$currentIp"
+                            "Local gateway IP changed; updating gateway IP to: $currentIp"
                         )
                         Toast.makeText(
                             context,
-                            "检测到本地IP网关变动，自动修改IP网关为:$currentIp",
+                            "Local gateway IP changed; updated gateway IP to: $currentIp",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                     prefs.edit(commit = true) { putString("gateway_ip", currentIp) }
                     if (currentIp != null) {
                         onIpChanged?.invoke(currentIp)
-                    } // 通知 Compose 更新 UI
+                    } // Notify Compose to update UI
                 }
             } else if (need_auto_ip == "true") {
-                //说明可能是第一次启动
+                // Likely first launch
                 prefs.edit(commit = true) { putString("gateway_ip", currentIp) }
-                KanoLog.d("kano_ZTE_LOG", "可能是第一次启动，自动修改IP网关为:$currentIp")
+                KanoLog.d("kano_ZTE_LOG", "Likely first launch; setting gateway IP to: $currentIp")
             }
         }
 
@@ -315,16 +315,16 @@ class KanoUtils {
                         context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
                     val ADB_IP =
                         sharedPrefs.getString("gateway_ip", "")?.substringBefore(":")
-                            ?: throw Exception("没有ADMIN_IP")
+                            ?: throw Exception("Missing ADMIN_IP")
 
                     val req = KanoGoformRequest("http://$ADB_IP:8080")
                     val result = req.getData(mapOf("cmd" to "usb_port_switch"))
                     val adb_enabled = result?.getString("usb_port_switch")
-                    Log.d("kano_ZTE_LOG", "查询ADB开启状态: $adb_enabled")
+                    Log.d("kano_ZTE_LOG", "ADB enabled status: $adb_enabled")
                     adb_enabled == "1"
                 }
             } catch (e: Exception) {
-                Log.e("kano_ZTE_LOG", "查询ADB开启状态执行错误: ${e.message}")
+                Log.e("kano_ZTE_LOG", "Failed to query ADB enabled status: ${e.message}")
                 false
             }
         }
@@ -337,38 +337,38 @@ class KanoUtils {
             val fileName = File(assetPath).name
             val outFile = File(context.getExternalFilesDir(null), fileName)
 
-            // 如果是追加模式且目标文件已存在，则直接返回该文件，避免干扰可执行文件的运行
+            // If skipIfExists is enabled and the file already exists, return it to avoid interfering with executable usage.
             if (skipIfExists && outFile.exists()) {
-                KanoLog.d("kano_ZTE_LOG", "外部文件已存在，跳过复制：${outFile.absolutePath}")
+                KanoLog.d("kano_ZTE_LOG", "External file already exists, skipping copy: ${outFile.absolutePath}")
                 return outFile
             }
 
             val input = try {
                 context.assets.open(assetPath)
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "assets 中不存在文件: $assetPath")
+                KanoLog.e("kano_ZTE_LOG", "Asset file not found: $assetPath")
                 return null
             }
 
             return try {
                 KanoLog.d(
                     "kano_ZTE_LOG",
-                    "开始复制 $fileName 到外部存储目录（skipIfExists?：$skipIfExists）"
+                    "Copying $fileName to external storage directory (skipIfExists: $skipIfExists)"
                 )
                 input.use { ins ->
                     FileOutputStream(outFile, skipIfExists).use { out ->
                         ins.copyTo(out)
                     }
                 }
-                KanoLog.d("kano_ZTE_LOG", "复制成功 -> ${outFile.absolutePath}")
+                KanoLog.d("kano_ZTE_LOG", "Copied successfully -> ${outFile.absolutePath}")
                 outFile
             } catch (e: Exception) {
-                KanoLog.e("kano_ZTE_LOG", "复制失败: ${e.message}")
+                KanoLog.e("kano_ZTE_LOG", "Copy failed: ${e.message}")
                 null
             }
         }
 
-        //递归复制asset中所有的目录和文件到files中
+        // Recursively copy all assets (dirs/files) into filesDir
         fun copyAssetsRecursively(
             context: Context,
             assetPath: String = "",
@@ -382,11 +382,11 @@ class KanoUtils {
                 val outFile = File(destDir, fileName)
 
                 if ((assetManager.list(fullAssetPath)?.isNotEmpty() == true)) {
-                    // 是目录，递归复制
+                    // Directory: copy recursively
                     outFile.mkdirs()
                     copyAssetsRecursively(context, fullAssetPath, outFile)
                 } else {
-                    // 是文件，复制
+                    // File: copy
                     assetManager.open(fullAssetPath).use { input ->
                         FileOutputStream(outFile).use { output ->
                             input.copyTo(output)
@@ -404,10 +404,10 @@ class KanoUtils {
             return try {
                 connection.requestMethod = "GET"
                 connection.connect()
-                connection.responseCode // 返回状态码
+                connection.responseCode // Status code
             } catch (e: Exception) {
                 e.printStackTrace()
-                -1 // 表示请求失败
+                -1 // Request failed
             } finally {
                 connection.disconnect()
             }
@@ -418,7 +418,7 @@ class KanoUtils {
         private var lastUpdate = 0L
         fun getCachedTodayUsage(context: Context): Long {
             val now = System.currentTimeMillis()
-            if (now - lastUpdate > 10_000) { // 每 10 秒更新一次
+            if (now - lastUpdate > 10_000) { // Update every 10 seconds
                 cachedTotal = getTodayDataUsage(context)
                 lastUpdate = now
             }
@@ -438,8 +438,8 @@ class KanoUtils {
 
         @Serializable
         data class ShellResult(
-            val done: Boolean,   // true: 正常输出; false: 报错或超时
-            val content: String  // 输出内容或错误信息
+            val done: Boolean,   // true: normal output; false: error or timeout
+            val content: String  // output content or error message
         )
 
         fun sendShellCmd(cmd: String, timeoutSeconds: Long = 300): ShellResult {
@@ -454,7 +454,7 @@ class KanoUtils {
                 val reader = process.inputStream.bufferedReader()
                 val errorReader = process.errorStream.bufferedReader()
 
-                // 启动两个线程读取输出，避免阻塞
+                // Start two threads to read output to avoid blocking
                 val outThread = Thread {
                     reader.useLines { lines ->
                         lines.forEach { line -> output.appendLine(line) }
@@ -469,15 +469,15 @@ class KanoUtils {
                 outThread.start()
                 errThread.start()
 
-                // 等待执行，最多 timeoutSeconds 秒
+                // Wait up to timeoutSeconds seconds
                 val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
 
                 if (!finished) {
-                    process.destroyForcibly() // 超时杀掉进程
+                    process.destroyForcibly() // Kill process on timeout
                     return ShellResult(done = false, content = "Error: Command timed out after $timeoutSeconds seconds")
                 }
 
-                // 确保输出线程结束
+                // Ensure output threads have finished
                 outThread.join()
                 errThread.join()
 
@@ -494,16 +494,16 @@ class KanoUtils {
 
         fun disableFota(context: Context):Boolean{
             if(isExecutingDisabledFOTA){
-                KanoLog.w("kano_ZTE_LOG", "禁用FOTA操作正在执行..无需重复执行")
+                KanoLog.w("kano_ZTE_LOG", "Disable FOTA is already running; skipping duplicate execution")
                 return false
             }
             try {
                 isExecutingDisabledFOTA = true
-                // 复制依赖文件
+                // Copy dependency file
                 val outFileAdb = copyFileToFilesDir(context, "shell/adb")
-                    ?: throw Exception("复制 adb 到 filesDir 失败")
+                    ?: throw Exception("Failed to copy adb to filesDir")
 
-                // 设置执行权限
+                // Set executable permissions
                 outFileAdb.setExecutable(true)
 
                 val cmds = listOf(
@@ -529,10 +529,10 @@ class KanoUtils {
             val t = token.ifBlank { "admin" }
 
             val rules: List<(String) -> Boolean> = listOf(
-                { it == "admin" },           // 默认弱口令
-                { it.length < 8 },           // 最小长度
-                { !it.any { c -> c.isDigit() } }, // 没有数字
-                { !it.any { c -> c.isLetter() } } // 没有字母
+                { it == "admin" },           // Default weak token
+                { it.length < 8 },           // Minimum length
+                { !it.any { c -> c.isDigit() } }, // No digits
+                { !it.any { c -> c.isLetter() } } // No letters
             )
 
             return rules.any { rule -> rule(t) }

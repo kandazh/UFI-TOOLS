@@ -37,7 +37,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
 
     get("/api/baseDeviceInfo") {
-        //客户端IP
+        // Client IP
         var ipRes: String? = null
         try {
             val headers = call.request.headers
@@ -47,29 +47,29 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 ?: headers["remote-addr"]
                 ?: call.request.origin.remoteAddress
 
-            KanoLog.d(TAG, "获取客户端IP成功: $ip")
+            KanoLog.d(TAG, "Got client IP: $ip")
             ipRes = ip
         } catch (e: Exception) {
-            KanoLog.e(TAG, "获取客户端IP出错: ${e.message}")
+            KanoLog.e(TAG, "Failed to get client IP: ${e.message}")
             ipRes = null
         }
 
-        //cpu温度
+        // CPU temperature
         var cpuTempRes: String? = null
         var cpuTempMax:String? = null
         try {
             val (maxTemp,temp) = readThermalZones()
             cpuTempMax = maxTemp.toString()
-            KanoLog.d(TAG, "获取CPU温度成功: $temp")
+            KanoLog.d(TAG, "Got CPU temperature: $temp")
             cpuTempRes = temp
             cpuTempRes = cpuTempRes.replace("\n", "")
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取CPU温度出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to get CPU temperature: ${e.message}")
             cpuTempRes = null
         }
 
-        //cpu 内存信息
+        // CPU and memory info
         var cpuFreqInfo: String? = null
         var cpuUsageInfo: String? = null
         var memInfo: String? = null
@@ -81,9 +81,9 @@ fun Route.baseDeviceInfoModule(context: Context) {
             val freq = getCpuFreqJson()
             val mem = getMemoryUsage()
 
-            KanoLog.d(TAG, "CPU频率数据：${freq}")
-            KanoLog.d(TAG, "CPU使用数据：${usage}")
-            KanoLog.d(TAG, "Mem使用数据：${mem}")
+            KanoLog.d(TAG, "CPU frequency data: ${freq}")
+            KanoLog.d(TAG, "CPU usage data: ${usage}")
+            KanoLog.d(TAG, "Memory usage data: ${mem}")
             cpuUsageRes = Json.parseToJsonElement(usage)
                 .jsonObject["cpu"]
                 ?.jsonPrimitive
@@ -99,10 +99,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             cpuFreqInfo = null
             cpuUsageInfo = null
             memInfo = null
-            KanoLog.d(TAG, "获取cpu内存信息出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to get CPU/memory info: ${e.message}")
         }
 
-        //存储与日流量获取
+        // Storage and daily data usage
         var dailyDataRes: Long? = null
         var availableSizeRes: Long? = null
         var usedSizeRes: Long? = null
@@ -111,25 +111,25 @@ fun Route.baseDeviceInfoModule(context: Context) {
         var externalUsedRes: Long? = null
         var externalAvailableRes: Long? = null
         try {
-            // 内部存储
+            // Internal storage
             val internalStorage = context.filesDir
             val statFs = StatFs(internalStorage.absolutePath)
             val totalSize = statFs.blockSizeLong * statFs.blockCountLong
             val availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
             val usedSize = totalSize - availableSize
 
-            // 获取日用流量
+            // Daily data usage
             val dailyData = KanoUtils.getCachedTodayUsage(context)
 
-            // 外部存储（可移动设备）
+            // External storage (removable)
             val exStorageInfo = KanoUtils.getCachedRemovableStorageInfo(context)
             val externalTotal = exStorageInfo?.totalBytes ?: 0
             val externalAvailable = exStorageInfo?.availableBytes ?: 0
             val externalUsed = externalTotal - externalAvailable
 
-            KanoLog.d(TAG, "日用流量：$dailyData")
-            KanoLog.d(TAG, "内部存储：$usedSize/$totalSize")
-            KanoLog.d(TAG, "外部存储：$externalAvailable/$externalTotal")
+            KanoLog.d(TAG, "Daily data usage: $dailyData")
+            KanoLog.d(TAG, "Internal storage: $usedSize/$totalSize")
+            KanoLog.d(TAG, "External storage: $externalAvailable/$externalTotal")
 
             dailyDataRes = dailyData
             availableSizeRes = availableSize
@@ -140,7 +140,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             externalAvailableRes = externalAvailable
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "存储与日流量信息出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to get storage/daily data info: ${e.message}")
             dailyDataRes = null
             availableSizeRes = null
             usedSizeRes = null
@@ -151,7 +151,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
         }
 
 
-        //型号与电量获取
+        // Model and battery
         var versionNameRes: String? = null
         var versionCodeRes: Int? = null
         var modelRes: String? = null
@@ -164,7 +164,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             currentNow = batteryStatus.current_uA
             votageNow = batteryStatus.voltage_uV
 
-            KanoLog.d(TAG, "型号与电量：${AppMeta.model} $batteryLevel")
+            KanoLog.d(TAG, "Model and battery: ${AppMeta.model} $batteryLevel")
 
             versionNameRes = AppMeta.versionName
             versionCodeRes = AppMeta.versionCode
@@ -172,7 +172,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             batteryLevelRes = batteryLevel
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取型号与电量信息出错：${e.message}")
+            KanoLog.d(TAG, "Failed to get model/battery info: ${e.message}")
             versionNameRes = null
             versionCodeRes = null
             modelRes = null
@@ -217,17 +217,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取用户协议信息出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to update terms acceptance: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取用户协议信息出错"}""",
+                """{"error":"Failed to update terms acceptance"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //版本信息获取
+    // Version info
     get("/api/version_info") {
         try {
             val jsonResult = """
@@ -242,10 +242,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取版本信息出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get version info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取版本信息出错"}""",
+                """{"error":"Failed to get version info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -259,17 +259,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取设备id出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get device id: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取设备id出错"}""",
+                """{"error":"Failed to get device id"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //SELinux状态
+    // SELinux status
     get("/api/SELinux"){
         try {
             val res = KanoUtils.getSELinuxStatus()
@@ -282,17 +282,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取selinux状态出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get SELinux status: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取selinux状态出错"}""",
+                """{"error":"Failed to get SELinux status"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //是否需要token
+    // Whether a token is required
     get("/api/need_token") {
         try {
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -307,17 +307,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取TOKEN信息出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get token requirement: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取TOKEN信息出错"}""",
+                """{"error":"Failed to get token requirement"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //usb设备树以及接口状态
+    // USB device tree and port status
     get("/api/usb_status") {
         try {
             val (maxSpeed,details) = readUsbDevices()
@@ -331,10 +331,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("kano_ZTE_LOG", "获取UsbDevices信息出错：${e.message}")
+            KanoLog.d("kano_ZTE_LOG", "Failed to get UsbDevices info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取UsbDevices信息出错"}""",
+                """{"error":"Failed to get UsbDevices info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

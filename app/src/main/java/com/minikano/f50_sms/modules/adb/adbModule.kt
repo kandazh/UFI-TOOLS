@@ -99,33 +99,28 @@ fun Route.adbModule(context: Context) {
                     putString("ADMIN_PWD", password)
                     putString("ADB_IP_ENABLED", "true")
                 }
-            // Response
+            } else {
                 sharedPrefs.edit(commit = true) {
                     remove("ADMIN_PWD")
                     putString("ADB_IP_ENABLED", "false")
                 }
             }
 
-            KanoLog.d(TAG, "Failed to parse ADB_WIFI POST request: ${e.message}")
-
-            // 响应
-                """{"error":"Failed to parse parameters"}""",
             call.respondText(
                 """{"result":"success","enabled":"$enabled"}""",
                 ContentType.Application.Json
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "解析ADB_WIFI POST 请求出错：${e.message}")
-    // Network ADB status
+            KanoLog.d(TAG, "Failed to parse ADB_WIFI POST request: ${e.message}")
             call.respondText(
-                """{"error":"参数解析失败"}""",
+                """{"error":"Failed to parse parameters"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //网络ADB启动状态
+    // Network ADB status
     get("/api/adb_alive") {
         call.response.headers.append("Access-Control-Allow-Origin", "*")
         call.respondText(

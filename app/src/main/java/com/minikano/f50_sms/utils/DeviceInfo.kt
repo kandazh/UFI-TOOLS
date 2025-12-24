@@ -12,10 +12,10 @@ import java.util.Locale.getDefault
 import kotlin.math.max
 
 /*
-* 感谢群内 执念 大哥提供的思路
+* Thanks to 'ZhiNian' (group member) for the idea
 * */
 
-// 数据类
+// Data classes
 data class CpuStat(val cpu: String, val total: Long, val idle: Long)
 data class ThermalZone(val type: String, val temp: Int)
 data class MemoryInfo(
@@ -48,7 +48,7 @@ private fun buildThermalJson(zones: List<ThermalZone>): String {
     return "[${jsonParts.joinToString(",")}]"
 }
 
-//获取json格式的cpu频率
+// Get CPU frequency as JSON
 suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
     val json = JSONObject()
     val cpuDir = File("/sys/devices/system/cpu")
@@ -70,10 +70,10 @@ suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
 }
 
 suspend fun calculateCpuUsage(): String = withContext(Dispatchers.IO) {
-    // 第一次读取
+    // First read
     val stats1 = readProcStat()
-    delay(100) // 等待 100ms
-    // 第二次读取
+    delay(100) // wait 100ms
+    // Second read
     val stats2 = readProcStat()
 
     val json = buildJsonObject {
@@ -103,9 +103,9 @@ private fun readProcStat(): Map<String, CpuStat> {
             val parts = line.trim().split("\\s+".toRegex())
             if (parts.size > 4) {
                 val cpuName = parts[0]
-                // 计算总时间（所有字段之和）
+                // Total time (sum of all fields)
                 val total = parts.subList(1, parts.size).sumOf { it.toLongOrNull() ?: 0 }
-                // 空闲时间 = idle + iowait (第4列 + 第5列)
+                // Idle time = idle + iowait (4th + 5th column)
                 val idle = parts[4].toLongOrNull() ?: (0 +
                         (parts.getOrNull(5)?.toLongOrNull() ?: 0))
                 stats[cpuName] = CpuStat(cpuName, total, idle)
@@ -118,19 +118,19 @@ private fun readProcStat(): Map<String, CpuStat> {
 suspend fun getMemoryUsage(): String = withContext(Dispatchers.IO) {
     val memInfo = readProcMeminfo()
 
-    // 计算内存使用率
+    // Memory usage
     val used = memInfo.total - memInfo.available
     val usagePercent = if (memInfo.total > 0) {
         used.toDouble() * 100 / memInfo.total
     } else 0.0
 
-    // 计算交换空间使用率
+    // Swap usage
     val swapUsed = memInfo.swapTotal - memInfo.swapFree
     val swapUsagePercent = if (memInfo.swapTotal > 0) {
         swapUsed.toDouble() * 100 / memInfo.swapTotal
     } else 0.0
 
-    // 构建JSON
+    // Build JSON
     return@withContext buildJsonObject {
         put("mem_total_kb", memInfo.total)
         put("mem_available_kb", memInfo.available)
@@ -169,7 +169,7 @@ private fun parseMemValue(line: String): Long {
         ?.toLongOrNull() ?: 0L
 }
 
-//CPU温度
+// CPU temperature
 suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) {
     val thermalDir = File("/sys/class/thermal")
     val zones = mutableListOf<ThermalZone>()
@@ -182,7 +182,7 @@ suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) 
             try {
                 val sensorType = typeFile.readText().trim()
                 val tempValue = tempFile.readText().trim().toIntOrNull() ?: -1
-                //大于124摄氏度的传感器不显示（过滤无意义值）
+                // Filter out meaningless values (e.g., >124°C)
                 if (tempValue <= 124 * 1000 && tempValue >= 0 && sensorType.isNotEmpty()) {
                     zones.add(ThermalZone(sensorType, tempValue))
                 }
@@ -196,10 +196,10 @@ suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) 
     return@withContext Pair(maxTemp, json)
 }
 
-//电池电压，电流
+// Battery voltage/current
 data class BatteryInfo(
-    var current_uA: Int = -1,  // 单位 μA
-    var voltage_uV: Int = -1  // 单位 μV
+    var current_uA: Int = -1,  // unit: μA
+    var voltage_uV: Int = -1  // unit: μV
 )
 suspend fun readBatteryStatus(): BatteryInfo = withContext(Dispatchers.IO) {
     val baseDir = File("/sys/class/power_supply/battery")
@@ -252,7 +252,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
             try {
                 val product = productFile.readText().trim()
                 val speed = speedFile.readText().trim().toIntOrNull() ?: 0
-                //排除掉不是 真正 USB-C 的设备
+                // Exclude devices that are not actual USB-C
                 if (
                     !(deviceDir.name.startsWith("usb")) &&
                     !(product.contains("Host Controller", ignoreCase = true)) &&
@@ -265,7 +265,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         }
     }
 
-    // 顺便获取 Type-C host/gadget 模式
+    // Also detect Type-C host/gadget mode
     // cat /sys/class/android_usb/android0/state
     var typeCMode = "unknown"
     val portStateFile = File("/sys/class/android_usb/android0/state")
@@ -274,7 +274,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         typeCMode = if (state == "DISCONNECTED") "host" else "gadget"
     }
 
-    //如果是gadget模式，从另一个地方获取速度
+    // If gadget mode, try reading speed from another source
     if(typeCMode == "gadget"){
         val udcDir = File("/sys/class/udc")
         if (udcDir.exists()){
@@ -299,7 +299,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         }
     }
 
-    // 构建 JSON
+    // Build JSON
     val jsonArray = JSONArray()
     devices.forEach { dev ->
         val obj = JSONObject()

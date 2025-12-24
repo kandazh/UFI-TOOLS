@@ -35,7 +35,7 @@ object KanoLog {
         if (isEnableLog) Log.e(tag, message,e)
     }
 
-    // 堆栈或记录日志到文件
+    // Stacktrace logging
     fun e(tag: String, throwable: Throwable, message: () -> String) {
         if (isEnableLog) Log.e(tag, message(), throwable)
     }

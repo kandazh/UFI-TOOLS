@@ -188,7 +188,7 @@ fun Route.themeModule(context: Context) {
                 null
             }
 
-            KanoLog.d(TAG, "读取 SharedPreferences: $kano_theme")
+            KanoLog.d(TAG, "Read SharedPreferences: $kano_theme")
 
             val config = if (json != null && json.length() > 0) {
                 ThemeConfig(

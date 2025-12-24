@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
 IFACE="br0"
-TC="tc" # 某些设备可能需改为 "/system/bin/tc"
+TC="tc" # Some devices may require "/system/bin/tc"
 
 json_output() {
   echo "$1" | tr -d '\n'
@@ -15,25 +15,25 @@ add_global_limit() {
     return
   fi
 
-  # 删除旧 qdisc
+  # Delete old qdisc
   $TC qdisc del dev "$IFACE" root 2>/dev/null
 
-  # 添加 root qdisc
+  # Add root qdisc
   if ! $TC qdisc add dev "$IFACE" root handle 1: htb default 10; then
     json_output '{"done":false,"error":"Failed to add root qdisc"}'
     return
   fi
 
-  # 添加父类（限速）
+  # Add parent class (rate limit)
   if ! $TC class add dev "$IFACE" parent 1: classid 1:1 htb rate "${mbit}mbit" ceil "${mbit}mbit"; then
     json_output '{"done":false,"error":"Failed to add parent class"}'
     return
   fi
 
-  # 默认 class（大带宽，不限速）
+  # Default class (large bandwidth, no limit)
   $TC class add dev "$IFACE" parent 1:1 classid 1:9999 htb rate 10000mbit ceil 10000mbit 2>/dev/null
 
-  # 限速 class（我们设置默认用这个）
+  # Limited class (used as default)
   if ! $TC class add dev "$IFACE" parent 1:1 classid 1:10 htb rate "${mbit}mbit" ceil "${mbit}mbit"; then
     json_output '{"done":false,"error":"Failed to add limit class"}'
     return
@@ -56,7 +56,7 @@ release_global_limit() {
   json_output '{"done":true,"released":true}'
 }
 
-# 命令解析
+# Argument parsing
 case "$1" in
   --limit)
     if [ "$#" -eq 2 ]; then

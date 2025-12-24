@@ -203,11 +203,11 @@ class ADBService : Service() {
                             }
 
                             if (result?.contains("localhost:5555\tdevice") == true) {
-                                KanoLog.d("kano_ZTE_LOG", "ADB连接成功: $result")
+                                KanoLog.d("kano_ZTE_LOG", "ADB connected successfully: $result")
                                 adbIsReady = true
                                 break
                             } else {
-                                KanoLog.d("kano_ZTE_LOG", "ADB未连接: $result")
+                                KanoLog.d("kano_ZTE_LOG", "ADB not connected: $result")
                             }
 
                             Thread.sleep(interval.toLong())

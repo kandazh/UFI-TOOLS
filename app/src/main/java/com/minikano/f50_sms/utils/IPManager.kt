@@ -2,9 +2,9 @@ package com.minikano.f50_sms.utils
 
 object IPManager {
     /**
-     * 获取当前 WiFi 连接的 IPv4 网关地址
-     * @param context 应用上下文
-     * @return 网关地址（192.168.0.1），获取失败返回 null
+    * Get the current hotspot gateway IPv4 address
+    * @param setPort Optional port to append
+    * @return Gateway IP (e.g., 192.168.0.1); null if not found
      */
     fun getHotspotGatewayIp(setPort:String?): String? {
         try {
@@ -18,13 +18,13 @@ object IPManager {
                 val iface = match.groupValues[2]
                 val ip = match.groupValues[3]
 
-                // 过滤掉不太可能是热点的接口
+                // Filter out interfaces unlikely to be the hotspot
                 if (iface.startsWith("br") || iface.startsWith("ap")) {
-                    KanoLog.d("kano_ZTE_LOG", "IPManager 获取热点IP：$ip:$setPort")
+                    KanoLog.d("kano_ZTE_LOG", "IPManager hotspot IP: $ip:$setPort")
                     if(setPort != null){
-                        return "$ip:$setPort" // 找到热点网关 IP
+                        return "$ip:$setPort" // Hotspot gateway IP found
                     }
-                    return ip // 找到热点网关 IP
+                    return ip // Hotspot gateway IP found
                 }
             }
         } catch (e: Exception) {

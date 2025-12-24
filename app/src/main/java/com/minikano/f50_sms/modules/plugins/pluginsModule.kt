@@ -21,7 +21,7 @@ fun Route.pluginsModule(context: Context) {
     val TAG = "[$BASE_TAG]_pluginsModule"
 
     authenticatedRoute(context){
-        //保存自定义头部
+        // Save custom head
         post("/api/set_custom_head") {
             try {
                 val body = call.receiveText()
@@ -29,7 +29,7 @@ fun Route.pluginsModule(context: Context) {
                 val maxSizeInBytes = 1145 * 1024
 
                 if (bodyBytes.size > maxSizeInBytes) {
-                    throw Exception("自定义头部超出限制: ${bodyBytes.size / 1145}KB/1024KB")
+                    throw Exception("Custom head exceeds limit: ${bodyBytes.size / 1145}KB/1024KB")
                 }
 
                 val json = JSONObject(body)
@@ -49,24 +49,24 @@ fun Route.pluginsModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "配置出错： ${e.message}")
+                KanoLog.d(TAG, "Configuration error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"配置出错: ${e.message}"}""",
+                    """{"error":"Configuration error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //从插件市场获取插件
+        // Get plugins from the plugin store
         get("/api/plugins_store"){
             try {
                 val download_url = "${AppMeta.GLOBAL_SERVER_URL}/d/UFI-TOOLS-UPDATE/plugins/ufi-tools-plugins"
                 val url = "${AppMeta.GLOBAL_SERVER_URL}/api/fs/list"
                 val path = "/UFI-TOOLS-UPDATE/plugins/ufi-tools-plugins"
 
-                // 请求 alist 的 API
+                // Call alist API
                 val requestBody = """
             {
                 "path": "$path",
@@ -81,7 +81,7 @@ fun Route.pluginsModule(context: Context) {
 
                 val alistBody = alistResponse.body?.string()
 
-                // 拼装 JSON 响应
+                // Build JSON response
                 val resultJson = """{
                     |"download_url":"$download_url",
                     |"res":$alistBody
@@ -91,13 +91,13 @@ fun Route.pluginsModule(context: Context) {
                 if (resultJson != null) {
                     call.respondText(resultJson, ContentType.Application.Json, HttpStatusCode.OK)
                 }else{
-                    throw Exception("响应为空")
+                    throw Exception("Empty response")
                 }
             } catch (e: Exception) {
-                KanoLog.d(TAG, "请求出错：${e.message}")
+                KanoLog.d(TAG, "Request error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"请求出错"}""",
+                    """{"error":"Request error"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
@@ -105,7 +105,7 @@ fun Route.pluginsModule(context: Context) {
         }
     }
 
-    //读取自定义头部
+    // Read custom head
     get("/api/get_custom_head") {
         try {
             val sharedPref =
@@ -120,10 +120,10 @@ fun Route.pluginsModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "读取自定义头部出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to read custom head: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"读取自定义头部出错"}""",
+                """{"error":"Failed to read custom head"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

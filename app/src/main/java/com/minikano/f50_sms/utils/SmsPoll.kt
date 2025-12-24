@@ -23,9 +23,9 @@ object SmsPoll {
         val isNew = lastSms == null || sms != lastSms
 
         if (withinMin && isNew) {
-            KanoLog.d("kano_ZTE_LOG", "收到新短信: ${sms.address} - ${sms.body}")
+            KanoLog.d("kano_ZTE_LOG", "Received new SMS: ${sms.address} - ${sms.body}")
             lastSms = sms
-            // 在这里做转发处理
+            // Forward processing
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val sms_forward_method = sharedPrefs.getString("kano_sms_forward_method", "") ?: ""
             if(sms_forward_method =="SMTP") {
@@ -40,30 +40,30 @@ object SmsPoll {
         } else {
             KanoLog.d(
                 "kano_ZTE_LOG",
-                "无新短信，短信是否${minute}分钟内：$withinMin,短信是否为新：$isNew"
+                "No new SMS. Within ${minute} minutes: $withinMin, is new: $isNew"
             )
         }
     }
 
-    //通过curl转发
+    // Forward via curl
     fun forwardSmsByCurl(sms_data: SmsInfo?, context: Context) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val originalCurl = sharedPrefs.getString("kano_sms_curl", null)
         if (originalCurl.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "curl 配置错误：kano_sms_curl 为空")
+            KanoLog.e("kano_ZTE_LOG", "curl config error: kano_sms_curl is empty")
             return
         }
 
-        KanoLog.d("kano_ZTE_LOG", "开始转发短信...（CURL）")
+        KanoLog.d("kano_ZTE_LOG", "Forwarding SMS... (CURL)")
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.systemDefault())
         val smsText = sms_data.body.trimStart()
         val smsFrom = sms_data.address
         val smsTime = formatter.format(Instant.ofEpochMilli(sms_data.timestamp))
 
-        //替换并发送
+        // Replace placeholders and send
         val replacedCurl = originalCurl
             .replace("\n","")
             .replace("{{sms-body}}", smsText)
@@ -73,44 +73,44 @@ object SmsPoll {
         KanoCURL(context).send(replacedCurl)
     }
 
-    //通过SMTP邮件转发
+    // Forward via SMTP email
     fun forwardByEmail(sms_data: SmsInfo?, context: Context) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val smtpHost = sharedPrefs.getString("kano_smtp_host", null)
         if (smtpHost.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "SMTP 配置错误：kano_smtp_host 为空")
+            KanoLog.e("kano_ZTE_LOG", "SMTP config error: kano_smtp_host is empty")
             return
         }
 
         val smtpTo = sharedPrefs.getString("kano_smtp_to", null)
         if (smtpTo.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "SMTP 配置错误：kano_smtp_to 为空")
+            KanoLog.e("kano_ZTE_LOG", "SMTP config error: kano_smtp_to is empty")
             return
         }
 
         val smtpPort = sharedPrefs.getString("kano_smtp_port", null)
         if (smtpPort.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "SMTP 配置错误：kano_smtp_port 为空")
+            KanoLog.e("kano_ZTE_LOG", "SMTP config error: kano_smtp_port is empty")
             return
         }
 
         val username = sharedPrefs.getString("kano_smtp_username", null)
         if (username.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "SMTP 配置错误：kano_smtp_username 为空")
+            KanoLog.e("kano_ZTE_LOG", "SMTP config error: kano_smtp_username is empty")
             return
         }
 
         val password = sharedPrefs.getString("kano_smtp_password", null)
         if (password.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "SMTP 配置错误：kano_smtp_password 为空")
+            KanoLog.e("kano_ZTE_LOG", "SMTP config error: kano_smtp_password is empty")
             return
         }
 
         val smtpClient = KanoSMTP(smtpHost, smtpPort, username, password)
 
-        KanoLog.d("kano_ZTE_LOG", "开始转发短信...(SMTP)")
+        KanoLog.d("kano_ZTE_LOG", "Forwarding SMS... (SMTP)")
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.systemDefault())
@@ -123,8 +123,8 @@ object SmsPoll {
             body = """
                 <div>
                     <p>${sms_data!!.body.trimStart()}</p>
-                    <p>📩 <b>来自：</b>${sms_data.address}</p>
-                    <p>⏰ <b>时间：</b>${formatter.format(Instant.ofEpochMilli(sms_data.timestamp))}</p>
+                    <p>📩 <b>From:</b> ${sms_data.address}</p>
+                    <p>⏰ <b>Time:</b> ${formatter.format(Instant.ofEpochMilli(sms_data.timestamp))}</p>
                     <div style="text-align: center;">
                         <i>Powered by <a href="https://github.com/kanoqwq/UFI-TOOLS" target="_blank">UFI-TOOLS</a></i>
                     </div>
@@ -133,34 +133,34 @@ object SmsPoll {
         )
     }
 
-    //通过钉钉webhook转发
+    // Forward via DingTalk webhook
     fun forwardSmsByDingTalk(sms_data: SmsInfo?, context: Context) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val webhookUrl = sharedPrefs.getString("kano_dingtalk_webhook", null)
         if (webhookUrl.isNullOrEmpty()) {
-            KanoLog.e("kano_ZTE_LOG", "钉钉配置错误：kano_dingtalk_webhook 为空")
+            KanoLog.e("kano_ZTE_LOG", "DingTalk config error: kano_dingtalk_webhook is empty")
             return
         }
 
         val secret = sharedPrefs.getString("kano_dingtalk_secret", null)
 
-        KanoLog.d("kano_ZTE_LOG", "开始转发短信...（钉钉）")
+        KanoLog.d("kano_ZTE_LOG", "Forwarding SMS... (DingTalk)")
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.systemDefault())
         val smsText = sms_data.body.trimStart()
         val smsFrom = sms_data.address
         val smsTime = formatter.format(Instant.ofEpochMilli(sms_data.timestamp))
 
-        // 构建钉钉消息内容
+        // Build DingTalk message content
         val messageContent = """
-            📱 新短信通知
-            
-            📄 内容：$smsText
-            📞 来自：$smsFrom
-            ⏰ 时间：$smsTime
-            
+            📱 New SMS Notification
+
+            📄 Content: $smsText
+            📞 From: $smsFrom
+            ⏰ Time: $smsTime
+
             Powered by UFI-TOOLS
         """.trimIndent()
 
@@ -184,7 +184,7 @@ object SmsPoll {
                 } else null
             }
         } catch (e: Exception) {
-            KanoLog.e("kano_ZTE_LOG", "没有短信权限，读不到短信呢", e)
+            KanoLog.e("kano_ZTE_LOG", "Missing SMS permission; cannot read SMS", e)
             null
         }
     }

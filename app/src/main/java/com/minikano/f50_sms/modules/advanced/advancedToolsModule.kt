@@ -33,34 +33,34 @@ import java.io.PipedOutputStream
 fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
     val TAG = "[$BASE_TAG]_advanceToolsModule"
 
-    //开启高级功能
+    // Enable advanced features
     get("/api/smbPath") {
         try {
             val enabled = call.request.queryParameters["enable"]
-                ?: throw Exception("缺少 query 参数 enable")
+                ?: throw Exception("Missing query parameter: enable")
 
-            KanoLog.d(TAG, "enable 传入参数：$enabled")
+            KanoLog.d(TAG, "enable param: $enabled")
 
-            // 复制依赖文件
+            // Copy dependency files
             val outFileAdb = KanoUtils.copyFileToFilesDir(context, "shell/adb")
-                ?: throw Exception("复制 adb 到 filesDir 失败")
+                ?: throw Exception("Failed to copy adb to filesDir")
             val smbPath = SMBConfig.writeConfig(context)
-                ?: throw Exception("复制 smb.conf 到 filesDir 失败")
+                ?: throw Exception("Failed to copy smb.conf to filesDir")
             val outFileTtyd = KanoUtils.copyFileToFilesDir(context, "shell/ttyd")
-                ?: throw Exception("复制 ttyd 到 filesDir 失败")
+                ?: throw Exception("Failed to copy ttyd to filesDir")
             val outFileSocat = KanoUtils.copyFileToFilesDir(context, "shell/socat")
-                ?: throw Exception("复制 socat 到 filesDir 失败")
+                ?: throw Exception("Failed to copy socat to filesDir")
             val outFileSmbSh =
                 KanoUtils.copyFileToFilesDir(context, "shell/samba_exec.sh", false)
-                    ?: throw Exception("复制 samba_exec.sh 到 filesDir 失败")
+                    ?: throw Exception("Failed to copy samba_exec.sh to filesDir")
 
-            // 设置执行权限
+            // Set executable permissions
             outFileAdb.setExecutable(true)
             outFileTtyd.setExecutable(true)
             outFileSocat.setExecutable(true)
             outFileSmbSh.setExecutable(true)
 
-            var jsonResult = """{"result":"执行成功<br>Execution successful！"}"""
+            var jsonResult = """{"result":"Execution successful!"}"""
 
             if (enabled == "1") {
                 val cmdShell =
@@ -75,8 +75,8 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                     resultAdb = ShellKano.runShellCommand(cmdAdb, context = context)
                 }
 
-                KanoLog.d(TAG, "使用shell开启高级模式结果 是否成功：${resultShell.done} 内容：${resultShell.content}")
-                KanoLog.d(TAG, "使用ADB开启高级模式结果$resultAdb")
+                KanoLog.d(TAG, "Enable advanced mode via shell success: ${resultShell.done}, content: ${resultShell.content}")
+                KanoLog.d(TAG, "Enable advanced mode via ADB result: $resultAdb")
 
                 val queryShell = "grep 'samba_exec.sh' /data/samba/etc/smb.conf"
                 val sambaResult =  sendShellCmd(queryShell,3)
@@ -86,21 +86,21 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                     sambaAdbResult = ShellKano.runShellCommand("${outFileAdb.absolutePath} -s localhost shell $queryShell", context = context)
                 }
 
-                KanoLog.d(TAG, "shell查询高级功能开启结果:${sambaResult.done} ${sambaResult.content}")
-                KanoLog.d(TAG, "ADB查询高级功能开启结果:$sambaAdbResult")
+                KanoLog.d(TAG, "Shell check advanced feature enabled: ${sambaResult.done} ${sambaResult.content}")
+                KanoLog.d(TAG, "ADB check advanced feature enabled: $sambaAdbResult")
 
                 if( resultAdb == null && !resultShell.done){
-                    throw Exception("开启高级功能失败(Adb与Shell方式执行不成功)，请打开网络ADB后再试<br>Failed to enable advanced features (resultAdb and resultShell execution unsuccessful)")
+                    throw Exception("Failed to enable advanced features (ADB and Shell execution unsuccessful). Please enable network ADB and try again.")
                 }
 
                 val queryShellIsDone = sambaResult.done && sambaResult.content.contains("samba_exec.sh")
                 val queryAdbIsDone = sambaAdbResult != null && sambaAdbResult.contains("samba_exec.sh")
 
                 if(!queryShellIsDone && !queryAdbIsDone){
-                    throw Exception("开启高级功能失败(配置文件没有更改或不存在)，请打开网络ADB后再试<br>Failed to enable advanced features (conf not changed or does not exist),please enable ADB")
+                    throw Exception("Failed to enable advanced features (config not changed or missing). Please enable network ADB and try again.")
                 }
 
-                jsonResult = """{"result":"执行成功，等待1-2分钟即可生效！<br>Execution successful, please wait 1–2 minutes for it to take effect!"}"""
+                jsonResult = """{"result":"Execution successful. Please wait 1-2 minutes for it to take effect!"}"""
             } else {
                 val script = """
                 chattr -i /data/samba/etc/smb.conf
@@ -112,62 +112,62 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
 
                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
                 if (!socketPath.exists()) {
-                    throw Exception("执行命令失败，没有找到 socat 创建的 sock (高级功能是否开启？)<br>Command execution failed, could not find the sock created by socat (are advanced features enabled?)")
+                    throw Exception("Command execution failed: could not find the sock created by socat (are advanced features enabled?)")
                 }
 
                 val result = RootShell.sendCommandToSocket(script, socketPath.absolutePath)
-                    ?: throw Exception("删除 smb.conf 失败")
+                    ?: throw Exception("Failed to delete smb.conf")
                 KanoLog.d(TAG, "sendCommandToSocket Output:\n$result")
             }
 
-            KanoLog.d(TAG, "刷新 SMB 中...")
+            KanoLog.d(TAG, "Refreshing SMB...")
             SmbThrottledRunner.runOnceInThread(context)
 
             call.respondText(jsonResult, ContentType.Application.Json)
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "smbPath 执行出错：${e.message}")
+            KanoLog.d(TAG, "smbPath error: ${e.message}")
             call.respondText(
-                """{"error":"Error：${e.message}"}""",
+                """{"error":"Error: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //禁用系统更新
+    // Disable system updates
     get("/api/disable_fota") {
         try {
             val res = KanoUtils.disableFota(context)
 
-            if(!res) throw Exception("禁用系统更新失败")
+            if(!res) throw Exception("Failed to disable system updates")
 
-            val jsonResult = """{"result":"执行成功,如需强力禁用请使用高级功能！"}"""
+            val jsonResult = """{"result":"Execution successful. For a stronger disable, use Advanced Features."}"""
 
             call.respondText(jsonResult, ContentType.Application.Json)
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "禁用系统更新出错：${e.message}")
+            KanoLog.d(TAG, "Disable system updates error: ${e.message}")
             call.respondText(
-                """{"error":"禁用系统更新出错：${e.message}"}""",
+                """{"error":"Disable system updates error: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //判断是否有ttyd
+    // Check whether ttyd exists
     get("/api/hasTTYD") {
         try {
             val params = call.request.queryParameters
             val port =
-                params["port"] ?: throw IllegalArgumentException("query 缺少 port 参数")
+                params["port"] ?: throw IllegalArgumentException("Missing query parameter: port")
 
             val host = targetServerIP.substringBefore(":")
             val fullUrl = "http://$host:$port"
             val code = KanoUtils.getStatusCode(fullUrl)
 
-            KanoLog.d(TAG, "TTYD获取ip+port信息： $host:$port 返回code:$code")
+            KanoLog.d(TAG, "TTYD ip+port: $host:$port status code: $code")
 
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
@@ -176,17 +176,17 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取TTYD信息出错： ${e.message}")
+            KanoLog.d(TAG, "Failed to get TTYD info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取TTYD信息出错:${e.message}"}""",
+                """{"error":"Failed to get TTYD info: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //用户shell
+    // User shell
     post("/api/user_shell") {
         try {
             val body = call.receiveText()
@@ -194,12 +194,12 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
             val json = try {
                 JSONObject(body)
             } catch (e: Exception) {
-                throw Exception("解析请求的json出错")
+                throw Exception("Failed to parse request JSON")
             }
 
             val text = json.optString("command", "").trim()
 
-            KanoLog.d(TAG, "获取到的command： ${text}")
+            KanoLog.d(TAG, "Received command: $text")
 
             if (text.isNotEmpty()) {
 
@@ -207,7 +207,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
 
                 if(!result.done) throw Exception(result.content)
 
-                KanoLog.d(TAG, "执行结果： ${result}")
+                KanoLog.d(TAG, "Execution result: $result")
 
                 val parsedResult = Json.encodeToString(result)
 
@@ -219,21 +219,21 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 )
 
             } else {
-                throw Exception("命令不能为空")
+                throw Exception("Command cannot be empty")
             }
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "shell执行出错： ${e.message}")
+            KanoLog.d(TAG, "Shell execution error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":${JSONObject.quote("shell执行出错: ${e.message}")}}""",
+                """{"error":${JSONObject.quote("Shell execution error: ${e.message}")}}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //一键Shell
+    // One-click Shell
     get("/api/one_click_shell") {
         val pipedInput = PipedInputStream()
         val pipedOutput = PipedOutputStream(pipedInput)
@@ -242,7 +242,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
             val writer = OutputStreamWriter(pipedOutput, Charsets.UTF_8)
             try {
                 val outFile_adb = KanoUtils.copyFileToFilesDir(context, "shell/adb")
-                    ?: throw Exception("复制adb 到filesDir失败")
+                    ?: throw Exception("Failed to copy adb to filesDir")
                 outFile_adb.setExecutable(true)
 
                 fun click_stage1() {
@@ -269,10 +269,10 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                             "${outFile_adb.absolutePath} -s localhost shell am start -n com.sprd.engineermode/.EngineerModeActivity",
                             context
                         )
-                        KanoLog.d(TAG, "工程模式打开结果：$Eng_result")
+                        KanoLog.d(TAG, "EngineerMode open result: $Eng_result")
                     }
                     if (Eng_result == null) {
-                        throw Exception("工程模式活动打开失败")
+                        throw Exception("Failed to open EngineerMode activity")
                     }
                     Thread.sleep(400)
                     val res_debug_log_btn = ShellKano.parseUiDumpAndClick(
@@ -280,14 +280,14 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                         outFile_adb.absolutePath,
                         context
                     )
-                    if (res_debug_log_btn == -1) throw Exception("点击 DEBUG&LOG 失败")
+                    if (res_debug_log_btn == -1) throw Exception("Failed to tap DEBUG&LOG")
                     if (res_debug_log_btn == 0) {
                         val res = ShellKano.parseUiDumpAndClick(
                             "Adb shell",
                             outFile_adb.absolutePath,
                             context
                         )
-                        if (res == -1) throw Exception("点击 Adb Shell 按钮失败")
+                        if (res == -1) throw Exception("Failed to tap Adb shell button")
                     }
                 }
 
@@ -300,7 +300,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                         } catch (e: Exception) {
                             KanoLog.w(
                                 TAG,
-                                "click_stage1 执行失败，尝试第 ${retry + 1} 次，错误：${e.message}"
+                                "click_stage1 failed, attempt ${retry + 1}, error: ${e.message}"
                             )
                             repeat(10) {
                                 ShellKano.runShellCommand(
@@ -312,12 +312,12 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                             retry++
                         }
                     }
-                    throw Exception("click_stage1 多次重试失败")
+                    throw Exception("click_stage1 failed after multiple retries")
                 }
 
                 tryClickStage1()
 
-                var jsonResult = """{"result":"执行成功"}"""
+                var jsonResult = """{"result":"Execution successful"}"""
                 try {
                     val escapedCommand =
                         "sh /sdcard/one_click_shell.sh".replace("\"", "\\\"")
@@ -326,15 +326,15 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                         outFile_adb.absolutePath,
                         context,
                         "",
-                        listOf("START", "开始"),
+                        listOf("START"),
                         useClipBoard = true
                     )
                 } catch (e: Exception) {
-                    jsonResult = """{"result":"执行失败"}"""
+                    jsonResult = """{"result":"Execution failed"}"""
                 }
                 writer.write(jsonResult)
             } catch (e: Exception) {
-                writer.write("""{"error":"one_click_shell执行错误：${e.message}"}""")
+                writer.write("""{"error":"one_click_shell error: ${e.message}"}""")
             } finally {
                 writer.flush()
                 pipedOutput.close()
@@ -350,7 +350,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
         }
     }
 
-    //rootShell执行
+    // Root shell execution
     post("/api/root_shell") {
         try {
             val body = call.receiveText()
@@ -358,18 +358,18 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
             val json = try {
                 JSONObject(body)
             } catch (e: Exception) {
-                throw Exception("解析请求的json出错")
+                throw Exception("Failed to parse request JSON")
             }
 
             val text = json.optString("command", "").trim()
 
-            KanoLog.d(TAG, "获取到的command： ${text}")
+            KanoLog.d(TAG, "Received command: $text")
 
             if (text.isNotEmpty()) {
 
                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
                 if (!socketPath.exists()) {
-                    throw Exception("执行命令失败，没有找到 socat 创建的 sock (高级功能是否开启？)")
+                    throw Exception("Command execution failed: could not find the sock created by socat (are advanced features enabled?)")
                 }
 
                 val result =
@@ -377,9 +377,9 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                         text,
                         socketPath.absolutePath
                     )
-                        ?: throw Exception("请检查命令输入格式")
+                        ?: throw Exception("Please check the command input format")
 
-                KanoLog.d(TAG, "执行结果： ${result}")
+                KanoLog.d(TAG, "Execution result: $result")
 
                 val parsedResult = Json.encodeToString(result)
 
@@ -391,14 +391,14 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 )
 
             } else {
-                throw Exception("命令不能为空")
+                throw Exception("Command cannot be empty")
             }
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "shell执行出错： ${e.message}")
+            KanoLog.d(TAG, "Shell execution error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"shell执行出错: ${e.message}"}""",
+                """{"error":"Shell execution error: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

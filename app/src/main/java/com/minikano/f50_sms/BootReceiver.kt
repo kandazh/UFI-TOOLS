@@ -36,7 +36,7 @@ class BootReceiver : BroadcastReceiver() {
 
                 withContext(Dispatchers.Main) {
                     if (isUnSupportDevice) {
-                        // 处理不支持设备逻辑
+                        // Handle unsupported device
                         Log.d("kano_ZTE_LOG", "Unsupported device detected; terminating")
                         exitProcess(-999)
                     }

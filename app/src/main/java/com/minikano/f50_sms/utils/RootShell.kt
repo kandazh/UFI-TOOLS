@@ -15,24 +15,24 @@ object RootShell {
         val socketAddress = LocalSocketAddress(socketPath, LocalSocketAddress.Namespace.FILESYSTEM)
 
         try {
-            KanoLog.d("kano_ZTE_LOG", "开始发送socket,目录：${socketPath},命令:${command}")
+            KanoLog.d("kano_ZTE_LOG", "Sending to socket. Path: $socketPath, command: $command")
 
             socket.connect(socketAddress)
-            socket.soTimeout = timeout // 60 秒超时
+            socket.soTimeout = timeout // timeout (ms)
 
             KanoLog.d("kano_ZTE_LOG", "Socket")
 
             val outputStream = BufferedWriter(OutputStreamWriter(socket.outputStream))
             val inputStream = BufferedReader(InputStreamReader(socket.inputStream))
 
-            // 发送命令
+            // Send command
             outputStream.write(command)
             outputStream.write("\n")
-            outputStream.write("echo __END__\n") // 标记结尾
+            outputStream.write("echo __END__\n") // end marker
             outputStream.flush()
             KanoLog.d("kano_ZTE_LOG", "Socket write")
 
-            // 读取响应
+            // Read response
             val result = StringBuilder()
             while (true) {
                 val line = inputStream.readLine() ?: break

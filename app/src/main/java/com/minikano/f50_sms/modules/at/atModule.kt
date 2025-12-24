@@ -15,29 +15,29 @@ import io.ktor.server.routing.get
 fun Route.atModule(context: Context) {
     val TAG = "[$BASE_TAG]_atModule"
 
-    //AT指令
+    // AT command
     get("/api/AT") {
         try {
             val command = call.request.queryParameters["command"]
-                ?: throw Exception("缺少 query 参数 command")
+                ?: throw Exception("Missing query parameter: command")
             val slot = call.request.queryParameters["slot"]?.toIntOrNull() ?: 0
 
-            KanoLog.d(TAG, "AT_command 传入参数：$command")
+            KanoLog.d(TAG, "AT_command input: $command")
 
             if (!command.trim().startsWith("AT", ignoreCase = true)) {
-                throw Exception("解析失败，AT指令需要以 “AT” 开头")
+                throw Exception("Parse failed: AT command must start with 'AT'")
             }
 
             val outFileAt = KanoUtils.copyFileToFilesDir(context, "shell/sendat")
-                ?: throw Exception("复制 sendat 到 filesDir 失败")
+                ?: throw Exception("Failed to copy sendat to filesDir")
             outFileAt.setExecutable(true)
 
             val atCommand = "${outFileAt.absolutePath} -n $slot -c '${command.trim()}'"
             val result = ShellKano.runShellCommand(atCommand, true)
-                ?: throw Exception("AT 指令没有输出")
+                ?: throw Exception("AT command returned no output")
 
             var res = result
-                .replace("\"", "\\\"") // 转义引号
+                .replace("\"", "\\\"") // Escape quotes
                 .replace("\n", "")
                 .replace("\r", "")
                 .trimStart()
@@ -49,8 +49,8 @@ fun Route.atModule(context: Context) {
                 res = res.removePrefix(",").trimStart()
             }
 
-            KanoLog.d(TAG, "AT_cmd：$atCommand")
-            KanoLog.d(TAG, "AT_result：$res")
+            KanoLog.d(TAG, "AT_cmd: $atCommand")
+            KanoLog.d(TAG, "AT_result: $res")
 
             call.respondText(
                 """{"result":"$res"}""",
@@ -58,10 +58,10 @@ fun Route.atModule(context: Context) {
             )
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "AT指令执行错误：${e.message}")
+            KanoLog.d(TAG, "AT command execution error: ${e.message}")
 
             call.respondText(
-                """{"error":"AT指令执行错误：${e.message}"}""",
+                """{"error":"AT command execution error: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

@@ -25,7 +25,7 @@ object DeviceModelChecker {
     )
 
     suspend fun checkBlackList(context:Context): Boolean {
-        Log.d("kano_ZTE_LOG_devcheck", "正在遍历黑名单设备...")
+        Log.d("kano_ZTE_LOG_devcheck", "Checking blacklisted devices...")
         val model = Build.MODEL.trim()
         val firmwareVersion = Build.DISPLAY
 
@@ -33,27 +33,27 @@ object DeviceModelChecker {
         val isDeviceWhiteList = prefs.getString("is_device_white_list", null)
         if (!isDeviceWhiteList.isNullOrEmpty()) {
             if(isDeviceWhiteList == "kano") {
-                Log.d("kano_ZTE_LOG_devcheck", "线上白名单(已持久化)，永久放行")
+                Log.d("kano_ZTE_LOG_devcheck", "Remote whitelist (persisted): always allow")
                 return false
             } else {
-                Log.d("kano_ZTE_LOG_devcheck", "错误的白名单字符串，跳过")
+                Log.d("kano_ZTE_LOG_devcheck", "Invalid whitelist marker; clearing and continuing")
                 prefs.edit(commit = true) { remove("is_device_white_list") }
             }
         }
 
         val uuid = UniqueDeviceIDManager.getUUID()
-        Log.d("kano_ZTE_LOG_devcheck", "当前设备UUID:$uuid")
+        Log.d("kano_ZTE_LOG_devcheck", "Current device UUID: $uuid")
 
         try {
             if (uuid != null) {
                 val res = KanoReport.getRemoteDeviceRegisterItem(uuid)
-                Log.d("kano_ZTE_LOG_devcheck", "线上数据返回:$res")
+                Log.d("kano_ZTE_LOG_devcheck", "Remote response: $res")
                 if (res != null && res.isWhiteList) {
-                    Log.d("kano_ZTE_LOG_devcheck", "线上白名单，永久放行")
+                    Log.d("kano_ZTE_LOG_devcheck", "Remote whitelist: always allow")
                     prefs.edit(commit = true) { putString("is_device_white_list", "kano") }
                     return false
                 }
-                //上报信息
+                // Report info
                 try{
                     CoroutineScope(Dispatchers.Main).launch {
                         reportToServer()
@@ -61,7 +61,7 @@ object DeviceModelChecker {
                 } catch (_:Exception){}
             }
         } catch (e: Exception) {
-            Log.e("kano_ZTE_LOG_devcheck", "获取远程设备注册信息异常", e)
+            Log.e("kano_ZTE_LOG_devcheck", "Failed to fetch remote device registration info", e)
         }
 
         devicesBlackList.forEach {
@@ -72,7 +72,7 @@ object DeviceModelChecker {
         }
         frimwareWhiteList.forEach {
             if (firmwareVersion.contains(it.trim())) {
-                Log.d("kano_ZTE_LOG_devcheck", "检测到白名单固件，即将放行")
+                Log.d("kano_ZTE_LOG_devcheck", "Whitelisted firmware detected; allowing")
                 isUnSupportDevice = false
             }
         }
@@ -82,7 +82,7 @@ object DeviceModelChecker {
     fun checkIsNotUFI(context: Context):Boolean{
         val isUFI_0 = KanoUtils.isAppInstalled(context,"com.zte.web")
         val isUFI = ShellKano.runShellCommand("pm list package")
-        Log.d("kano_ZTE_LOG_devcheck", "isUFI_0：${isUFI_0},has com.zte.web? :${isUFI?.contains("com.zte.web")} ")
+        Log.d("kano_ZTE_LOG_devcheck", "isUFI_0: ${isUFI_0}, has com.zte.web?: ${isUFI?.contains("com.zte.web")} ")
         return !(isUFI != null && isUFI.contains("com.zte.web")) || !isUFI_0
     }
 }
